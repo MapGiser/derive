@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>derive</title>
+  <link rel="stylesheet" href="static/Cesium/Build/Cesium/Widgets/widgets.css">
+  <script src="static/Cesium/Build/Cesium/Cesium.js"></script>
+  <style>
+    #cesiumContainer {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+    }
+
+    .cesium-widget-credits {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="cesiumContainer"></div>
+
+  <script>
+    let viewer = new Cesium.Viewer("cesiumContainer", {
+      infoBox: false,
+      selectionIndicator: false,
+      shadows: true,
+      shouldAnimate: true,
+      timeline: false,
+      animation: false,
+      fullscreenButton: false
+    });
+
+    //Enable depth testing so things behind the terrain disappear.
+    viewer.scene.globe.depthTestAgainstTerrain = true;
+
+
+    window.viewer = viewer;
+  </script>
+
+  <!-- built files will be auto injected -->
+</body>
+
+</html>
