@@ -21,7 +21,6 @@ planManage.prototype.add = function (options) {
         this.addModel(options);
       }
       this.addPath(options);
-
     }
     if (options.voiceText) {
       this.addVoice(options);
@@ -57,6 +56,7 @@ planManage.prototype.addModel = function (options) {
       startTime: this._planModel._startTime,
       endTime: this._planModel._endTime,
       orientation: this._planModel._orientation,
+      startOrition: this._planModel._startOrition,
       endOrition: this._planModel._endOrition,
       position: this._planModel._positions
     })
@@ -72,6 +72,7 @@ planManage.prototype.addModelEntity = function (options) {
       startTime: this._planModel._startTime,
       endTime: this._planModel._endTime,
       orientation: this._planModel._orientation,
+      startOrition: this._planModel._startOrition,
       endOrition: this._planModel._endOrition,
       position: this._planModel._positions
     })
