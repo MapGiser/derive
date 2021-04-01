@@ -47,6 +47,9 @@ PlanEvent.prototype.addEventByEventType = function (options) {
 
 PlanEvent.prototype.addFireEvent = function (options) {
   let position = options.position;
+  let startScale = 1.0;
+  let endScale = 1.0;
+  let that = this;
   if (position) {
     this._position = position;
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
@@ -55,19 +58,50 @@ PlanEvent.prototype.addFireEvent = function (options) {
       speed: options.speed || 15,
       lifetime: options.lifetime || 0.8,
       particleLife: 0.5,
-      show: false,
+      show: true,
+      startScale: 1,
+      endScale: 1,
       emitter: options.emitter || new Cesium.ConeEmitter(Cesium.Math.toRadians(55.0)),//new Cesium.BoxEmitter(new Cesium.Cartesian3(0.9,1.5,1.9)),
       image: options.image || './static/data/img/fire.png',
       emissionRate: options.emissionRate || 180.0,
       startColor: options.startColor || Cesium.Color.fromCssColorString('#ffffff'),
       endColor: options.endColor || Cesium.Color.fromCssColorString('#ffa000').withAlpha(0.6),
       imageSize: options.imageSize || new Cesium.Cartesian2(5, 2.5),
-      updateCallback: options.updateCallback || null,
-      loop: options.loop || true,
-      show: options.show || true,
+      updateCallback: options.updateCallback || applyGravity,
       mass: options.mass || 300,
       sizeInMeters: options.sizeInMeters || true
-    });
+    })
+  }
+
+
+  function applyGravity(particle, dt) {
+    var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
+    var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
+    if (particle) {
+      let time = that._viewer.clock.currentTime;
+      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+        that.event.startScale = that.event.endScale = 0.01;
+        that.event.image = options.image;
+        // that.event.startColor = that.event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+        // that.event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+        that.event.image = null;
+        that.event.startScale = that.event.endScale = 0.01;
+      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
+        that.event.emissionRate = options.emissionRate || 180;
+        that.event.startScale = startScale;
+        that.event.image = options.image;
+        that.event.endScale = endScale;
+      } else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        that.event.startScale = startScale;
+        that.event.image = options.image;
+        that.event.endScale = endScale;
+
+        let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
+        if (emissionRate < 0.1) emissionRate = 0.01;
+        that.event.emissionRate = emissionRate * that._emissionRate;
+      }
+    }
   }
 }
 
@@ -183,7 +217,6 @@ PlanEvent.prototype.computerAzimuth = function (pos1, pos3) {
 }
 
 PlanEvent.prototype.addWaterEvent = function (options) {
-  let viewer = this._viewer;
   let positionOringon = options.positionOringon;//pos1
   let positionEnd = options.positionEnd;//pos3
   this._positionOringon = positionOringon;
@@ -318,14 +351,36 @@ PlanEvent.prototype.addWaterEvent = function (options) {
 
     return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
   }
-
+  var that = this;
   //设置重力
   function applyGravity(p, dt) {
     var position = p.position;
     Cesium.Cartesian3.normalize(position, gravityScratch);
     Cesium.Cartesian3.multiplyByScalar(gravityScratch, gravity * dt, gravityScratch);
-
     p.velocity = Cesium.Cartesian3.add(p.velocity, gravityScratch, p.velocity);
+
+    let time = that._viewer.clock.currentTime;
+    if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+      that.event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+      that.event.image = null;
+
+      that.event.startScale = that.event.endScale = 0.01;
+      // that.event.show = false;
+    } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+      // that.event.emissionRate = that._emissionRate;
+      // that.event.show = true;
+      that.event.startScale = startScale
+      that.event.image = image;
+      that.event.startColor = new Cesium.Color(1, 1, 1, 0.6);
+      that.event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4)
+      that.event.endScale = endScale;
+    } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+      // that.event.emissionRate = 0.001;
+      // that.event.show = false;
+      that.event.startScale = that.event.endScale = 0.01;
+      that.event.image = null;
+      that.event.startColor = that.event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+    }
   }
 
 
@@ -334,9 +389,9 @@ PlanEvent.prototype.addWaterEvent = function (options) {
     image: image,
     startColor: new Cesium.Color(1, 1, 1, 0.6),
     endColor: new Cesium.Color(0.80, 0.86, 1, 0.4),
-    startScale: startScale,
-    endScale: endScale,
-    show: false,
+    startScale: 0.01,
+    endScale: 0.01,
+    show: true,
     minimumParticleLife: minimumParticleLife,
     maximumParticleLife: maximumParticleLife,
     minimumSpeed: speedMin,
@@ -346,10 +401,55 @@ PlanEvent.prototype.addWaterEvent = function (options) {
     emitter: new Cesium.CircleEmitter(0.5),
     modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(positionOringon),//computeModelMatrix(entity, viewer.clock.currentTime),
     emitterModelMatrix: computeEmitterModelMatrix(),
-    updateCallback: applyGravity,
+    updateCallback: options.updateCallback || applyGravity,
     sizeInMeters: true
   })
 
 }
+
+
+Object.defineProperties(PlanEvent, {
+  emissionRate: {
+    get: function () {
+      return this._emissionRate;
+    },
+    set: function (value) {
+      if (Cesium.defined(value)) {
+        this._emissionRate = value;
+      }
+    }
+  },
+  startTime: {
+    get: function () {
+      return this._startTime;
+    },
+    set: function (value) {
+      if (value) {
+        this._startTime = value;
+      }
+    }
+  },
+  endTime: {
+    get: function () {
+      return this._endTime;
+    },
+    set: function (value) {
+      if (value) {
+        this._endTime = value;
+      }
+    }
+  },
+  eventType: {
+    get: function () {
+      return this._eventType;
+    },
+    set: function (value) {
+      if (value) {
+        this._eventType = value;
+      }
+    }
+  }
+})
+
 
 export default PlanEvent;
