@@ -10,7 +10,7 @@ function planControl(options) {
   this._clockRange0 = this._viewer.clock.clockRange;
   this._multiplier0 = this._viewer.clock.multiplier;
   this._currentTime0 = this._viewer.clock.currentTime;
-  this._viewer.clock.multiplier = 0.01;
+  // this._viewer.clock.multiplier = 0.1;
   if (this._startTime && this._endTime) {
     let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
     let middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeSeconds / 2, new Cesium.JulianDate());
@@ -21,7 +21,7 @@ function planControl(options) {
 }
 
 planControl.prototype.addEvent = function (options) {
-  this._viewer.clock.multiplier = 0.01;
+  // this._viewer.clock.multiplier = 0.1;
   this._copyOptions = Object.assign(options, this);
   this._planManage.add(options);
   // this.render();
@@ -157,8 +157,8 @@ planControl.prototype.rePlay = function () {
 }
 planControl.prototype.play = function () {
   let viewer = this._viewer;
-  viewer.clock.multiplier = this._multiplier0;
-  viewer.clock.currentTime = this._startTime;
+  // viewer.clock.multiplier = this._multiplier0;
+  // viewer.clock.currentTime = this._startTime;
   this.render();
 }
 planControl.prototype.pause = function () {
