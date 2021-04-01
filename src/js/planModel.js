@@ -13,11 +13,14 @@ function PlanModel(options) {
   this._name = Cesium.defaultValue(options.name, 'PlanManagement');
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
-  this._startTime = Cesium.defaultValue(options.startTime, null);
+
+
+  this._startTime = this._time0 = Cesium.defaultValue(options.startTime, null);
   this._middleTime = Cesium.defaultValue(options.middleTime, null);
-  this._endTime = Cesium.defaultValue(options.endTime, null);
-  this._time0 = Cesium.defaultValue(options.modelStartTime, null);
-  this._time1 = Cesium.defaultValue(options.modelEndTime, null);
+  this._endTime= this._time1 = Cesium.defaultValue(options.endTime, null);
+
+  // this._time0 = Cesium.defaultValue(options.modelStartTime, null);
+  // this._time1 = Cesium.defaultValue(options.modelEndTime, null);
 
   this._minTime = Cesium.Iso8601.MINIMUM_VALUE;
   this._maxTime = Cesium.Iso8601.MAXIMUM_VALUE;
