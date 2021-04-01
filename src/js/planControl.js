@@ -22,7 +22,7 @@ function planControl(options) {
 
 planControl.prototype.addEvent = function (options) {
   // this._viewer.clock.multiplier = 0.1;
-  this._copyOptions = Object.assign(options, this);
+  // this._copyOptions = Object.assign(options, this);
   this._planManage.add(options);
   // this.render();
 }
@@ -122,58 +122,63 @@ planControl.prototype.render = function () {
 }
 
 planControl.prototype.rePlay = function () {
-  let viewer = this._viewer;
-  if (viewer.clock.currentTime > this._middleTime) {
-    let eventCollection = this._planManage._eventCollection;
-    let pathCollection = this._planManage._pathCollection;
-    let modelCollection = this._planManage._modelCollection;
-    eventCollection.forEach(item => {
-      let event = item.event;
-      if (event) {
-        if (item.eventType === 2) {
-          event.show = false;
-        } else {
-          event.show = true;
-        }
-        event.emissionRate = item.emissionRate;
-      }
+  // let viewer = this._viewer;
+  // if (viewer.clock.currentTime > this._middleTime) {
+  //   let eventCollection = this._planManage._eventCollection;
+  //   let pathCollection = this._planManage._pathCollection;
+  //   let modelCollection = this._planManage._modelCollection;
+  //   eventCollection.forEach(item => {
+  //     let event = item.event;
+  //     if (event) {
+  //       if (item.eventType === 2) {
+  //         event.show = false;
+  //       } else {
+  //         event.show = true;
+  //       }
+  //       event.emissionRate = item.emissionRate;
+  //     }
 
-    })
-    modelCollection.forEach(item => {
-      let model = item.model;
-      if (model) {
-        model.orientation = item.orientation;
-      }
+  //   })
+  //   modelCollection.forEach(item => {
+  //     let model = item.model;
+  //     if (model) {
+  //       model.orientation = item.orientation;
+  //     }
 
-    })
-    pathCollection.forEach(item => {
-      let path = item.path;
-      if (path) path.show = true;
-      item.position = null;
-    })
-  }
+  //   })
+  //   pathCollection.forEach(item => {
+  //     let path = item.path;
+  //     if (path) path.show = true;
+  //     item.position = null;
+  //   })
+  // }
   this.play();
 
 }
+
 planControl.prototype.play = function () {
   let viewer = this._viewer;
   // viewer.clock.multiplier = this._multiplier0;
-  // viewer.clock.currentTime = this._startTime;
-  this.render();
+  viewer.clock.currentTime = this._startTime;
+  // this.render();
 }
+
 planControl.prototype.pause = function () {
   let viewer = this._viewer;
   viewer.clock.multiplier = 0;
 }
+
 planControl.prototype.start = function () {
   let viewer = this._viewer;
   viewer.clock.multiplier = this._multiplier0;
 }
+
 planControl.prototype.reset = function () {
   let viewer = this._viewer;
   viewer.clock.multiplier = 0;
   viewer.clock.currentTime = this._startTime;
 }
+
 planControl.prototype.destory = function () {
   let viewer = this._viewer;
   this.remove();
