@@ -5,6 +5,7 @@
       <button @click="stopDraw()">结束绘制</button> -->
       <button @click="loadEvent()">添加灾害</button>
       <button @click="loadPath()">添加路线</button>
+      <button @click="loadPath1()">添加路线1</button>
       <button @click="play()">播放</button>
       <button @click="rePlay()">重新播放</button>
       <button @click="destory()">结束</button>
@@ -33,17 +34,17 @@ export default {
     initManage() {
       var viewer = window.viewer;
       var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
+      window.start = start;
       var stop = Cesium.JulianDate.addSeconds(
         start,
-        60,
+        70,
         new Cesium.JulianDate()
       );
       //Make sure viewer is at the desired time.
       viewer.clock.startTime = start.clone();
-      // viewer.clock.stopTime = stop.clone();
       viewer.clock.currentTime = start.clone();
-      viewer.clock.clockRange = Cesium.ClockRange.CLAMPED; //Loop at the end
-      viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
+      // viewer.clock.clockRange = Cesium.ClockRange.CLAMPED; //Loop at the end
+      viewer.clock.clockRange = Cesium.ClockRange.UNBOUNDED; //Loop at the end
 
       viewer.scene.globe.depthTestAgainstTerrain = true;
 
@@ -52,8 +53,7 @@ export default {
       });
       window.planDraw = planDraw;
 
-      // var planManages = new planManage({});
-      // window.planManages = planManages;
+      //初始化
       var planControl = new planControls({
         viewer: window.viewer,
         startTime: start,
@@ -92,20 +92,21 @@ export default {
       // });
     },
     loadEvent() {
-      var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
       var stop = Cesium.JulianDate.addSeconds(
-        start,
+        window.start,
         60,
         new Cesium.JulianDate()
       );
 
-      var time = {
-        start: start,
-        end: stop
-      };
-
       var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
       var that = this;
+      //添加火
+   
+      /**
+       * startTime火的开始时间  应该比整个预案的开始时间大，比预案的结束时间早
+       * endTime 火的结束时间  应该比整个预案的开始时间大，比预案的结束时间早
+       * eventType火的类型，表示发生的事件是火
+      */
       planDraw.startDraw("point", function(val) {
         var position = val.position;
         var posCopy = Cesium.Cartographic.fromCartesian(position);
@@ -125,6 +126,9 @@ export default {
       });
     },
     play() {
+      window.viewer.clock.currentTime = Cesium.JulianDate.fromDate(
+        new Date(2015, 2, 25, 16)
+      );
       planControl.play();
     },
     rePlay() {
@@ -144,43 +148,103 @@ export default {
     },
     loadPath() {
       var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
-      var stop = Cesium.JulianDate.addSeconds(
+      var modelStartTime = Cesium.JulianDate.addSeconds(
         start,
-        60,
+        20,
+        new Cesium.JulianDate()
+      );
+      var modelEndTime = Cesium.JulianDate.addSeconds(
+        start,
+        30,
+        new Cesium.JulianDate()
+      );
+      var modelEndTime1 = Cesium.JulianDate.addSeconds(
+        start,
+        30,
         new Cesium.JulianDate()
       );
 
       viewer.clock.currentTime = start.clone();
 
-      var time = {
-        start: start,
-        end: stop
-      };
+      var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
+      var that = this;
+      planDraw.startDraw("polyline", function(val) {
+        var position = val.position;
+        /**
+         * 添加路径和模型 表示模型在这表路径上运动
+         * 
+         * model      表示已经添加在场景中的模型 [和modelPath二选一]
+         * modelPath  模型的url [和model二选一]
+         * startTime  模型开始运动的时间  应该比整个预案的开始时间大，比预案的结束时间早
+         * endTime    模型结束运动的时间  应该比整个预案的开始时间大，比预案的结束时间早
+         * position   模型运路径坐标  数组类型
+        */
+        let options = {
+          viewer: window.viewer,
+          // model: window.entity1,
+          modelPath: modelPath,
+          startTime: modelStartTime,
+          endTime: modelEndTime,
+          // modelStartTime: modelStartTime,
+          // modelEndTime: modelEndTime,
+          position: position
+        };
+
+        planControl.addEvent(options);
+
+
+        /**
+         * 添加喷水事件 表示喷水
+         * 
+         * positionOringon 开始喷水的坐标位置 也就是模型运动的的坐标点位的最后一个位置
+         * positionEnd  喷水到的坐标位置 也就是起火的位置
+         * startTime  开始喷水的时间  应该模型运动的结束时间晚，比预案的结束时间早
+         * endTime    结束喷水的时间  应该模型运动的结束时间晚，比预案的结束时间早
+         * eventType  喷水事件类型
+        */
+        let options1 = {
+          viewer: window.viewer,
+          positionOringon: position[position.length - 1],
+          positionEnd: that.position,
+          startTime: modelEndTime,
+          endTime: modelEndTime1,
+          eventType: planMode.water
+        };
+        planControl.addEvent(options1);
+      });
+    },
+    loadPath1() {
+      var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
+      var modelStartTime = Cesium.JulianDate.addSeconds(
+        start,
+        25,
+        new Cesium.JulianDate()
+      );
+      var modelEndTime = Cesium.JulianDate.addSeconds(
+        start,
+        35,
+        new Cesium.JulianDate()
+      );
+      var modelEndTime1 = Cesium.JulianDate.addSeconds(
+        start,
+        48,
+        new Cesium.JulianDate()
+      );
+   
+
+      viewer.clock.currentTime = start.clone();
 
       var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
       var that = this;
       planDraw.startDraw("polyline", function(val) {
         var position = val.position;
-        // var model = val.entity;
-        // var posCopy = Cesium.Cartographic.fromCartesian(position);
-        // if (posCopy.height < 0.5) {
-        //   posCopy.height += 1;
-        // }
-        // position = Cesium.Cartographic.toCartesian(posCopy);
-        var timeSeconds = Cesium.JulianDate.secondsDifference(stop, start);
-        var middleTime = Cesium.JulianDate.addSeconds(
-          start,
-          timeSeconds / 2,
-          new Cesium.JulianDate()
-        );
 
         let options = {
           viewer: window.viewer,
           // model: window.entity1,
           modelPath: modelPath,
-          startTime: start,
-          middleTime: middleTime,
-          endTime: stop,
+          startTime: modelStartTime,
+          endTime: modelEndTime,
           position: position
         };
 
@@ -190,9 +254,8 @@ export default {
           viewer: window.viewer,
           positionOringon: position[position.length - 1],
           positionEnd: that.position,
-          startTime: start,
-          endTime: stop,
-          position: position,
+          startTime: modelEndTime,
+          endTime: modelEndTime1,
           eventType: planMode.water
         };
         planControl.addEvent(options1);
