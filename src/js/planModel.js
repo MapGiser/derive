@@ -16,6 +16,12 @@ function PlanModel(options) {
   this._startTime = Cesium.defaultValue(options.startTime, null);
   this._middleTime = Cesium.defaultValue(options.middleTime, null);
   this._endTime = Cesium.defaultValue(options.endTime, null);
+  this._time0 = Cesium.defaultValue(options.modelStartTime, null);
+  this._time1 = Cesium.defaultValue(options.modelEndTime, null);
+
+  this._minTime = Cesium.Iso8601.MINIMUM_VALUE;
+  this._maxTime = Cesium.Iso8601.MAXIMUM_VALUE;
+
   if (!this._middleTime) {
     var timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
     var middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeSeconds / 2, new Cesium.JulianDate());
@@ -23,16 +29,6 @@ function PlanModel(options) {
   }
 
   this._time = Cesium.defaultValue({ start: this._startTime, middle: this._middleTime, end: this._endTime }, null);
-
-  this._pathObject = Cesium.defaultValue(options.pathObject, {
-    pathWidth: 10,
-    pathShow: false,
-    pathColor: Cesium.Color.YELLOW,
-    pathResolution: 1,
-  });
-
-  // this.render();
-
 }
 
 PlanModel.prototype.init = function () {
@@ -49,7 +45,6 @@ PlanModel.prototype.addModel = function () {
     let middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeStop / 2, new Cesium.JulianDate());
     this._middleTime = Cesium.defaultValue(this._middleTime, middleTime);
     this._time.middle = this._middleTime;
-    var availability = this.initAvibility(this._time);
   }
   if (this._modelPath) {
     if (this._model) {
@@ -59,35 +54,65 @@ PlanModel.prototype.addModel = function () {
       this._modelGraphic = model;
     }
   }
-  var path = this.initPath(this._pathObject);
   if (this._positions && this._time) {
-    // if (this._model) {
-    //   let postion = this._model.position._value;
-    //   this._positions.unshift(postion);
-    // }
-    var position = this.computePath(this._positions, this._time);
-    this._orientation = this.initOrientation(position);
+    //位于时间段之前的位置
+    var positionBefore = this.computePathBeforeTime(this._positions);
+    //位于时间段内的位置
+    var positionIn = this.computePathInTime(this._positions, this._time);
+    //位于时间段之后的位置
+    var positionAfter = this.computePathAfterTime(this._positions);
+    // 四元数
+    this._orientation = this.initOrientation(positionIn);
     // 用于最后矫正飞机的姿态
-    this._endOrition = this._orientation.getValue(this._orientationTime, new Cesium.Quaternion())
+    // this._startOrition = this.initOrientation(positionBefore);
+    // this._endOrition = this.initOrientation(positionAfter);
+    // this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
+    // this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
   }
   var entity;
+  let that = this;
   if (this._model) {
-    this._modelGraphic.availability = availability;
     this._modelGraphic.orientation = this._orientation;
-    this._modelGraphic.path = path;
-    this._modelGraphic.position = position;
+    this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
+
+      if (Cesium.JulianDate.lessThan(time, that._time0) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+        // if (entity) {
+        //   entity.orientation = that._orientationStartTime;
+        // }
+        return positionBefore.getValue(time, new Cesium.Cartesian3());
+      } else if (Cesium.JulianDate.greaterThan(time, that._time1) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+        // if (entity) {
+        //   entity.orientation = that._orientationEndTime;
+        // }
+        return positionAfter.getValue(time, new Cesium.Cartesian3());
+      } else {
+        return positionIn.getValue(time, new Cesium.Cartesian3());
+      }
+    }, false);
     entity = this._modelGraphic;
+
   } else if (this._modelPath) {
     var entity = viewer.entities.add({
-      availability: availability,
-      position: position,
       orientation: this._orientation,
       model: this._modelGraphic,
-      path: path
+      position: new Cesium.CallbackProperty(function (time) {
+        if (Cesium.JulianDate.lessThan(time, that._time0) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+          // if (entity) {
+          //   entity.orientation = that._orientationStartTime;
+          // }
+          return positionBefore.getValue(time, new Cesium.Cartesian3());
+        } else if (Cesium.JulianDate.greaterThan(time, that._time1) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+          // if (entity) {
+          //   entity.orientation = that._orientationEndTime;
+          // }
+          return positionAfter.getValue(time, new Cesium.Cartesian3());
+        } else {
+          return positionIn.getValue(time, new Cesium.Cartesian3());
+        }
+      }, false)
+
     });
   }
-
-
   this._entityModel = entity;
   return entity;
 
@@ -97,39 +122,10 @@ PlanModel.prototype.initModel = function (_modelPath) {
   if (_modelPath) {
     var options = {
       uri: _modelPath,
-      minimumPixelSize: this._minimumPixelSize || 0.1,
-      maximumScale: this._maximumScale || 0.51,
+      minimumPixelSize: this._minimumPixelSize || 10,
+      maximumScale: this._maximumScale || 1.0,
     }
     return new Cesium.ModelGraphics(options)
-  }
-}
-
-PlanModel.prototype.initPath = function (path) {
-  if (path) {
-    return {
-      show: path.pathShow,
-      resolution: path.pathResolution,
-      material: new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.1,
-        color: path.pathColor
-      }),
-      width: path.pathWidth,
-    }
-  }
-}
-
-PlanModel.prototype.initAvibility = function (_time) {
-  if (_time) {
-    var start = _time.start;
-    var end = Cesium.JulianDate.addSeconds(_time.end, 10, new Cesium.JulianDate());
-    if (start && end) {
-      return new Cesium.TimeIntervalCollection([
-        new Cesium.TimeInterval({
-          start: start,
-          stop: end,
-        })
-      ])
-    }
   }
 }
 
@@ -140,40 +136,74 @@ PlanModel.prototype.initOrientation = function (_positions) {
   }
 }
 
-PlanModel.prototype.computePath = function (_positions, _time) {
+PlanModel.prototype.computePathBeforeTime = function (_positions) {
+  if (_positions && this._time0) {
+    var property = new Cesium.SampledPositionProperty();
+    var timeBefore = Cesium.JulianDate.addSeconds(
+      this._time0,
+      -100000,
+      new Cesium.JulianDate()
+    );
+    for (var i = 0; i <= 100000; i += 1000) {
+      var timeUse = Cesium.JulianDate.addSeconds(
+        timeBefore,
+        i,
+        new Cesium.JulianDate()
+      );
+      var position = _positions[0];
+      property.addSample(timeUse, position);
+    }
+    this._beforeTimeProperty = property;
+    return property;
+  }
+}
+
+PlanModel.prototype.computePathInTime = function (_positions, _time) {
   if (_positions && _time) {
     var length = _positions.length;//3
-    var timeStep;
-    if (_time.start && _time.middle) {
-      timeStep = (_time.middle.secondsOfDay - _time.start.secondsOfDay) / (length - 1);//20
+    var timeStep = 0;
+    // if (_time.start && _time.end) {
+    if (this._time0 && this._time1) {
+      timeStep = (this._time1.secondsOfDay - this._time0.secondsOfDay) / (length - 1);
     }
 
     var property = new Cesium.SampledPositionProperty();
     for (var i = 0; i < length; i++) {
       var timeUse = Cesium.JulianDate.addSeconds(
-        _time.start,
+        this._time0,
         i * timeStep,
         new Cesium.JulianDate()
       );
       var position = _positions[i];
       property.addSample(timeUse, position);
-      if (i == length - 2) {
-        this._orientationTime = timeUse;
-      }
+      // if (i == 1 || i == 0) {
+      //   propertyStart.addSample(timeUse, position);
+      //   this._orientationStartTime = propertyStart;
+      // }
+      // if (i == length - 3 || i === length - 2) {
+      //   propertyEnd.addSample(timeUse, position);
+      //   this._orientationEndTime = propertyEnd;
+      // }
     }
+    this._propertyPsotion = property;
+    return property;
+  }
+}
 
-    var timeEndSeconds = Cesium.JulianDate.secondsDifference(_time.end, _time.middle);
-    timeEndSeconds += 10;
-    for (var j = 0; j < timeEndSeconds; j += 5) {
+PlanModel.prototype.computePathAfterTime = function (_positions) {
+  if (_positions && this._time1) {
+    var property = new Cesium.SampledPositionProperty();
+    var length = 100000;
+    for (var i = 0; i <= length; i += 1000) {
       var timeUse = Cesium.JulianDate.addSeconds(
-        _time.middle,
-        j,
+        this._time1,
+        i,
         new Cesium.JulianDate()
       );
       var position = _positions[_positions.length - 1];
       property.addSample(timeUse, position);
     }
-    this._propertyPsotion = property;
+    this._afterTimeProperty = property;
     return property;
   }
 }
@@ -245,6 +275,26 @@ Object.defineProperties(PlanModel, {
       }
     }
   },
+  modelStartTime: {
+    get: function () {
+      return this._time0;
+    },
+    set: function (value) {
+      if (value) {
+        this.time0 = value;
+      }
+    }
+  },
+  modelEndTime: {
+    get: function () {
+      return this._time1;
+    },
+    set: function (value) {
+      if (value) {
+        this.time1 = value;
+      }
+    }
+  },
   positions: {
     get: function () {
       return this._positions;
@@ -278,16 +328,6 @@ Object.defineProperties(PlanModel, {
     }
   },
 
-  pathObject: {
-    get: function () {
-      return this._pathObject;
-    },
-    set: function (value) {
-      if (value) {
-        this._pathObject = value;
-      }
-    }
-  },
   show: {
     get: function () {
       return this._show;
