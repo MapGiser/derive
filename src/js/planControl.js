@@ -1,5 +1,8 @@
 import planManage from './planManage.js'
 import planMode from './planMode.js'
+import PlanEvent from './planEvent.js'
+import PlanModel from './planModel.js';
+import PlanPath from './planPath';
 function planControl(options) {
   if (!options.viewer) {
     console.error('viewer is required!');
@@ -7,10 +10,6 @@ function planControl(options) {
   this._viewer = options.viewer;
   this._startTime = options.startTime;
   this._endTime = options.endTime;
-  this._clockRange0 = this._viewer.clock.clockRange;
-  this._multiplier0 = this._viewer.clock.multiplier;
-  this._currentTime0 = this._viewer.clock.currentTime;
-  // this._viewer.clock.multiplier = 0.1;
   if (this._startTime && this._endTime) {
     let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
     let middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeSeconds / 2, new Cesium.JulianDate());
@@ -18,149 +17,38 @@ function planControl(options) {
   }
   this._planManage = new planManage();
 
+  this._modelCollection = [];
+  this._eventCollection = [];
+  this._pathCollection = [];
+  this._voiceCollection = [];
 }
 
-planControl.prototype.addEvent = function (options) {
-  // this._viewer.clock.multiplier = 0.1;
-  // this._copyOptions = Object.assign(options, this);
-  this._planManage.add(options);
-  // this.render();
-}
-
-planControl.prototype.render = function () {
-  let viewer = this._viewer;
-  let modelCollection = this._planManage._modelCollection;
-  let eventCollection = this._planManage._eventCollection;
-  let voiceCollection = this._planManage._voiceCollection;
-  // let pathCollection = this._planManage._pathCollection;
-  let targetEvent, originEvent, emission, middleBeforeTime;
-  if (eventCollection && eventCollection.length > 0) {
-    targetEvent = eventCollection.filter((item) => {
-      return (item.eventType === planMode.fire || item.eventType === planMode.fireworks || item.eventType === planMode.explode)
-    })
-
-    originEvent = eventCollection.filter((item) => {
-      return (item.eventType === planMode.water)
-    })
-  }
-
-
-  let that = this;
-  if (targetEvent) {
-    emission = targetEvent[0].event.emissionRate;
-  }
-  if (that._middleTime) {
-    middleBeforeTime = Cesium.JulianDate.addSeconds(that._middleTime, -2, new Cesium.JulianDate());
-  }
-  let listenser = function () {
-
-    if (viewer.clock.currentTime >= that._endTime) {
-      targetEvent.forEach(item => {
-        item.event.show = false;
-      })
-
-      originEvent.forEach(item => {
-        item.event.show = false;
-      })
-
-
-      viewer.clock.multiplier = 0;
-      viewer.scene.preRender.removeEventListener(listenser);
-    } else if (viewer.clock.currentTime >= that._startTime && viewer.clock.currentTime < middleBeforeTime) {
-      if (originEvent) {
-        originEvent.forEach(item => {
-          item.event.show = false;
-        })
+planControl.prototype.add = function (event) {
+  if (Cesium.defined(event)) {
+    if (Cesium.defined(event._eventType) && event._startTime && event._endTime) {
+      if (event._eventType === planMode.fire || event._eventType === planMode.fireworks || event._eventType === planMode.water) {
+        this._eventCollection.push(event);
       }
-      if (targetEvent) {
-        targetEvent.forEach(item => {
-          item.event.show = true;
-        })
-      }
-      if (modelCollection) {
-        modelCollection.forEach(item => {
-          let model = item.model;
-          if (model) {
-            model.orientation = item.orientation;
-          }
-        })
-      }
-
-    } else if (viewer.clock.currentTime >= middleBeforeTime && viewer.clock.currentTime < that._middleTime) {
-      
-      modelCollection.forEach(item => {
-        let model = item.model;
-        if (model) {
-          model.orientation = item.endOrition;
-        }
-      })
-    } else if (viewer.clock.currentTime >= that._middleTime && viewer.clock.currentTime < that._endTime) {
-      originEvent.forEach(item => {
-        item.event.show = true;
-      })
-
-      targetEvent.forEach(item => {
-        let emissionRate = ((that._endTime.secondsOfDay - viewer.clock.currentTime.secondsOfDay) / (that._endTime.secondsOfDay - that._middleTime.secondsOfDay)) //* item.event.emissionRate;
-        if (emissionRate < 0.1) emissionRate = 0;
-        item.event.emissionRate = emission * emissionRate;
-      })
     }
-
-
-    // voiceCollection.forEach(item => {
-    //   let startTime = item.startTime;
-    //   if (viewer.clock.currentTime >= startTime) {
-    //     item.speak();
-    //   }
-    // })
+    if (event._eventType === 'path') {
+      this._pathCollection.push(event);
+    }
+    if (event._modelGraphic && event._startTime && event._endTime) {
+      this._modelCollection.push(event);
+    }
   }
-  if (viewer.scene.preRender._listeners.indexOf(listenser) > -1) {
-    viewer.scene.preRender.removeEventListener(listenser);
-  }
-
-  viewer.scene.preRender.addEventListener(listenser);
+}
+planControl.prototype.addEvent = function (options) {
+  this._planManage.add(options);
 }
 
 planControl.prototype.rePlay = function () {
-  // let viewer = this._viewer;
-  // if (viewer.clock.currentTime > this._middleTime) {
-  //   let eventCollection = this._planManage._eventCollection;
-  //   let pathCollection = this._planManage._pathCollection;
-  //   let modelCollection = this._planManage._modelCollection;
-  //   eventCollection.forEach(item => {
-  //     let event = item.event;
-  //     if (event) {
-  //       if (item.eventType === 2) {
-  //         event.show = false;
-  //       } else {
-  //         event.show = true;
-  //       }
-  //       event.emissionRate = item.emissionRate;
-  //     }
-
-  //   })
-  //   modelCollection.forEach(item => {
-  //     let model = item.model;
-  //     if (model) {
-  //       model.orientation = item.orientation;
-  //     }
-
-  //   })
-  //   pathCollection.forEach(item => {
-  //     let path = item.path;
-  //     if (path) path.show = true;
-  //     item.position = null;
-  //   })
-  // }
   this.play();
-
 }
 
 planControl.prototype.play = function () {
   let viewer = this._viewer;
-  // viewer.clock.multiplier = this._multiplier0;
   viewer.clock.currentTime = this._startTime;
-  // this.render();
 }
 
 planControl.prototype.pause = function () {
@@ -180,51 +68,47 @@ planControl.prototype.reset = function () {
 }
 
 planControl.prototype.destory = function () {
-  let viewer = this._viewer;
   this.remove();
-  viewer.clock.clockRange = this._clockRange0;
-  viewer.clock.multiplier = this._multiplier0;
-  viewer.clock.currentTime = this._currentTime0;
-  // this._planManage = undefined;
-  // this._copyOptions = undefined;
   return this.isDestory = true;
 }
 planControl.prototype.remove = function () {
   let viewer = this._viewer;
-  let modelCollection = this._planManage._modelCollection;
-  let eventCollection = this._planManage._eventCollection;
-  let voiceCollection = this._planManage._voiceCollection;
-  let pathCollection = this._planManage._pathCollection;
+  let modelCollection = this._modelCollection;
+  let eventCollection = this._eventCollection;
+  let voiceCollection = this._voiceCollection;
+  let pathCollection = this._pathCollection;
 
   modelCollection.forEach(item => {
-    let model = item.model;
-    viewer.entities.remove(model);
+    let model = item._entityModel;
+    if (model) viewer.entities.remove(model);
   })
 
   eventCollection.forEach(item => {
-    let event = item.event;
-    viewer.scene.primitives.remove(event);
+    let event = item._event;
+    if (event) viewer.scene.primitives.remove(event);
   })
   pathCollection.forEach(item => {
-    let path = item.path;
-    viewer.entities.remove(path);
-    item.position = null;
+    let path = item._entityModel;
+    if (path) viewer.entities.remove(path);
   })
   voiceCollection.forEach(item => {
     item.voiceText = null;
   })
+
+
+  this._modelCollection.length = this._eventCollection.length = this._voiceCollection.length = this._pathCollection.length = 0;
 }
 
 planControl.prototype.fromJSON = function (jsonFile) {
   let that = this;
   if (jsonFile) {
-
+    this._modelCollection.length = this._eventCollection.length = this._voiceCollection.length = this._pathCollection.length = 0;
     Cesium.Resource.fetchJson(jsonFile).then(function (val) {
       if (val) {
-        let modelCollection = val.modelCollection;
-        let eventCollection = val.eventCollection;
-        let pathCollection = val.pathCollection;
-        let voiceCollection = val.voiceCollection;
+        let modelCollection = val.modelCollection.concat();
+        let eventCollection = val.eventCollection.concat();
+        let pathCollection = val.pathCollection.concat();
+        let voiceCollection = val.voiceCollection.concat();
         let p;
 
 
@@ -250,7 +134,6 @@ planControl.prototype.fromJSON = function (jsonFile) {
                 lines.push(p);
               }
             }
-
             let obj = {
               viewer: that._viewer,
               startTime: startTime,
@@ -258,7 +141,10 @@ planControl.prototype.fromJSON = function (jsonFile) {
               position: lines,
               modelPath: modelPath
             }
-            that.addEvent(obj);
+
+            let planModel = new PlanModel(obj);
+            planModel.addModel();
+            that.add(planModel);
           })
         }
 
@@ -295,7 +181,6 @@ planControl.prototype.fromJSON = function (jsonFile) {
             if (positionEnd) {
               positionEnd = new Cesium.Cartesian3(positionEnd[0], positionEnd[1], positionEnd[2]);
             }
-
             let obj = {
               viewer: that._viewer,
               startTime: startTime,
@@ -305,14 +190,15 @@ planControl.prototype.fromJSON = function (jsonFile) {
               positionEnd: positionEnd,
               eventType: eventType
             }
-            that.addEvent(obj);
+            let planEvent = new PlanEvent(obj);
+            planEvent.addEvent({ eventType: eventType });
+            that.add(planEvent);
           })
         }
 
         if (pathCollection) {
           pathCollection.forEach(item => {
             let position = item.position;
-            let modelPath = item.modelPath;
 
             let lines = [];
             if (position) {
@@ -327,9 +213,12 @@ planControl.prototype.fromJSON = function (jsonFile) {
             let obj = {
               viewer: that._viewer,
               position: lines,
-              modelPath: modelPath
+              eventType:item.eventType
             }
-            that.addEvent(obj);
+
+            let planPath = new PlanPath(obj);
+            planPath.addPath();
+            that.add(planPath);
           })
         }
       }
@@ -346,33 +235,26 @@ planControl.prototype.export = function () {
   let voiceCollectionCopy = [];
   let pathCollectionCopy = [];
 
-  let modelCollection = this._planManage._modelCollection.concat();
-  let eventCollection = this._planManage._eventCollection.concat();
-  let voiceCollection = this._planManage._voiceCollection.concat();
-  let pathCollection = this._planManage._pathCollection.concat();
+  let modelCollection = this._modelCollection;
+  let eventCollection = this._eventCollection;
+  let voiceCollection = this._voiceCollection;
+  let pathCollection = this._pathCollection;
 
 
   let t, e, p, po, poCopy, pe, peCopy;
   let obj = {};
-
-  //   endOrition: Quaternion {x: 0.36930440310462576, y: -0.26249252665892314, z: 0.20508498081067877, w: 0.8675552327901862}
-  // endTime: JulianDate {dayNumber: 2457106, secondsOfDay: 72095}
-  // model: Entity {_availability: TimeIntervalCollection, _id: "b6eaec12-9f85-4ff1-a926-699878d91054", _definitionChanged: Event, _name: undefined, _show: true, …}
-  // modelPath: "./static/data/model/CesiumAir/Cesium_Air.gltf"
-  // orientation: VelocityOrientationProperty {_velocityVectorProperty: VelocityVectorProperty, _subscription: undefined, _ellipsoid: Ellipsoid, _definitionChanged: Event}
-  // startTime:
   modelCollection.forEach(item => {
-    if (item.startTime) {
-      t = Cesium.JulianDate.toDate(item.startTime)
+    if (item._startTime) {
+      t = Cesium.JulianDate.toDate(item._startTime)
     }
-    if (item.endTime) {
-      e = Cesium.JulianDate.toDate(item.endTime)
+    if (item._endTime) {
+      e = Cesium.JulianDate.toDate(item._endTime)
     }
 
     //copyPositions
     let lines = [];
-    if (item.position) {
-      let position = item.position;
+    if (item._positions) {
+      let position = item._positions;
       if (position instanceof Array) {
         position.forEach(item => {
           let p = item;
@@ -386,35 +268,37 @@ planControl.prototype.export = function () {
         lines.push(position.z);
       }
     }
-    if (item.positionOringon) {
-      po = item.positionOringon;
+
+    if (item._positionOringon) {
+      po = item._positionOringon;
       poCopy = [po.x, po.y, po.z];
     }
-    if (item.positionEnd) {
-      pe = item.positionEnd;
+    if (item._positionEnd) {
+      pe = item._positionEnd;
       peCopy = [pe.x, pe.y, pe.z];
     }
     obj = {
       startTime: t,
       endTime: e,
       position: lines,
-      modelPath: item.modelPath,
+      modelPath: item._modelPath,
       positionOringon: poCopy || null,
-      positionEnd: peCopy || null
+      positionEnd: peCopy || null,
+      eventType: item._eventType
     }
     modelCollectionCopy.push(obj);
   })
 
   eventCollection.forEach(item => {
-    if (item.startTime) {
-      t = Cesium.JulianDate.toDate(item.startTime);
+    if (item._startTime) {
+      t = Cesium.JulianDate.toDate(item._startTime);
     }
-    if (item.endTime) {
-      e = Cesium.JulianDate.toDate(item.endTime);
+    if (item._endTime) {
+      e = Cesium.JulianDate.toDate(item._endTime);
     }
     let lines = [];
-    if (item.position) {
-      let position = item.position;
+    if (item._position) {
+      let position = item._position;
       if (position instanceof Array) {
         position.forEach(item => {
           let p = item.position;
@@ -428,12 +312,12 @@ planControl.prototype.export = function () {
         lines.push(position.z);
       }
     }
-    if (item.positionOringon) {
-      po = item.positionOringon;
+    if (item._positionOringon) {
+      po = item._positionOringon;
       poCopy = [po.x, po.y, po.z];
     }
-    if (item.positionEnd) {
-      pe = item.positionEnd;
+    if (item._positionEnd) {
+      pe = item._positionEnd;
       peCopy = [pe.x, pe.y, pe.z];
     }
 
@@ -443,23 +327,23 @@ planControl.prototype.export = function () {
       position: lines,
       positionOringon: poCopy || null,
       positionEnd: peCopy || null,
-      eventType: item.eventType
+      eventType: item._eventType
     }
     eventCollectionCopy.push(obj);
   })
 
   pathCollection.forEach(item => {
-    if (item.startTime) {
-      t = Cesium.JulianDate.toDate(item.startTime)
+    if (item._startTime) {
+      t = Cesium.JulianDate.toDate(item._startTime)
     }
-    if (item.endTime) {
-      e = Cesium.JulianDate.toDate(item.endTime)
+    if (item._endTime) {
+      e = Cesium.JulianDate.toDate(item._endTime)
     }
 
     //copyPositions
     let lines = [];
-    if (item.position) {
-      let position = item.position;
+    if (item._positions) {
+      let position = item._positions;
       position.forEach(item => {
         let p = item;
         lines.push(p.x);
@@ -472,7 +356,7 @@ planControl.prototype.export = function () {
       startTime: t,
       endTime: e,
       position: lines,
-      modelPath: ''
+      eventType: item._eventType
     }
     pathCollectionCopy.push(obj);
   })
