@@ -13,14 +13,12 @@ function PlanModel(options) {
   this._name = Cesium.defaultValue(options.name, 'PlanManagement');
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
+  this._eventType = 'model';
 
 
-  this._startTime = this._time0 = Cesium.defaultValue(options.startTime, null);
+  this._startTime = Cesium.defaultValue(options.startTime, null);
   this._middleTime = Cesium.defaultValue(options.middleTime, null);
-  this._endTime= this._time1 = Cesium.defaultValue(options.endTime, null);
-
-  // this._time0 = Cesium.defaultValue(options.modelStartTime, null);
-  // this._time1 = Cesium.defaultValue(options.modelEndTime, null);
+  this._endTime = Cesium.defaultValue(options.endTime, null);
 
   this._minTime = Cesium.Iso8601.MINIMUM_VALUE;
   this._maxTime = Cesium.Iso8601.MAXIMUM_VALUE;
@@ -66,50 +64,56 @@ PlanModel.prototype.addModel = function () {
     var positionAfter = this.computePathAfterTime(this._positions);
     // 四元数
     this._orientation = this.initOrientation(positionIn);
+    // this._orientation1 = this.initOrientation(this._orientationStartTime);
+    // this._orientation2 = this.initOrientation(this._orientationEndTime);
     // 用于最后矫正飞机的姿态
     // this._startOrition = this.initOrientation(positionBefore);
     // this._endOrition = this.initOrientation(positionAfter);
-    // this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
-    // this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
+    this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
+    this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
   }
   var entity;
   let that = this;
   if (this._model) {
     this._modelGraphic.orientation = this._orientation;
     this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
-
-      if (Cesium.JulianDate.lessThan(time, that._time0) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-        // if (entity) {
-        //   entity.orientation = that._orientationStartTime;
-        // }
+      if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+        if (entity) {
+          entity.orientation = this._startOrition;
+        }
         return positionBefore.getValue(time, new Cesium.Cartesian3());
-      } else if (Cesium.JulianDate.greaterThan(time, that._time1) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
-        // if (entity) {
-        //   entity.orientation = that._orientationEndTime;
-        // }
+      } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+        if (entity) {
+          entity.orientation = that._endOrition;
+        }
         return positionAfter.getValue(time, new Cesium.Cartesian3());
       } else {
+        if (entity) {
+          entity.orientation = that._orientation;
+        }
         return positionIn.getValue(time, new Cesium.Cartesian3());
       }
     }, false);
     entity = this._modelGraphic;
-
   } else if (this._modelPath) {
     var entity = viewer.entities.add({
       orientation: this._orientation,
       model: this._modelGraphic,
       position: new Cesium.CallbackProperty(function (time) {
-        if (Cesium.JulianDate.lessThan(time, that._time0) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-          // if (entity) {
-          //   entity.orientation = that._orientationStartTime;
-          // }
+        if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+          if (entity) {
+            entity.orientation = this._startOrition;
+          }
           return positionBefore.getValue(time, new Cesium.Cartesian3());
-        } else if (Cesium.JulianDate.greaterThan(time, that._time1) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
-          // if (entity) {
-          //   entity.orientation = that._orientationEndTime;
-          // }
+        } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+          if (entity) {
+            entity.orientation = that._endOrition;
+          }
           return positionAfter.getValue(time, new Cesium.Cartesian3());
         } else {
+          if (entity) {
+            entity.orientation = that._orientation;
+          }
           return positionIn.getValue(time, new Cesium.Cartesian3());
         }
       }, false)
@@ -140,10 +144,10 @@ PlanModel.prototype.initOrientation = function (_positions) {
 }
 
 PlanModel.prototype.computePathBeforeTime = function (_positions) {
-  if (_positions && this._time0) {
+  if (_positions && this._startTime) {
     var property = new Cesium.SampledPositionProperty();
     var timeBefore = Cesium.JulianDate.addSeconds(
-      this._time0,
+      this._startTime,
       -100000,
       new Cesium.JulianDate()
     );
@@ -161,32 +165,31 @@ PlanModel.prototype.computePathBeforeTime = function (_positions) {
   }
 }
 
-PlanModel.prototype.computePathInTime = function (_positions, _time) {
-  if (_positions && _time) {
-    var length = _positions.length;//3
+PlanModel.prototype.computePathInTime = function (_positions) {
+  if (_positions) {
+    var length = _positions.length;
     var timeStep = 0;
-    // if (_time.start && _time.end) {
-    if (this._time0 && this._time1) {
-      timeStep = (this._time1.secondsOfDay - this._time0.secondsOfDay) / (length - 1);
+    if (this._startTime && this._endTime) {
+      timeStep = (this._endTime.secondsOfDay - this._startTime.secondsOfDay) / (length - 1);
     }
 
     var property = new Cesium.SampledPositionProperty();
     for (var i = 0; i < length; i++) {
       var timeUse = Cesium.JulianDate.addSeconds(
-        this._time0,
+        this._startTime,
         i * timeStep,
         new Cesium.JulianDate()
       );
       var position = _positions[i];
       property.addSample(timeUse, position);
-      // if (i == 1 || i == 0) {
-      //   propertyStart.addSample(timeUse, position);
-      //   this._orientationStartTime = propertyStart;
-      // }
-      // if (i == length - 3 || i === length - 2) {
-      //   propertyEnd.addSample(timeUse, position);
-      //   this._orientationEndTime = propertyEnd;
-      // }
+      if (i == 1) {
+        // propertyStart.addSample(timeUse, position);
+        this._orientationStartTime = timeUse;
+      }
+      if (i === length - 1) {
+        // propertyEnd.addSample(timeUse, _positions[length - 2]);
+        this._orientationEndTime = timeUse;
+      }
     }
     this._propertyPsotion = property;
     return property;
@@ -194,12 +197,12 @@ PlanModel.prototype.computePathInTime = function (_positions, _time) {
 }
 
 PlanModel.prototype.computePathAfterTime = function (_positions) {
-  if (_positions && this._time1) {
+  if (_positions && this._endTime) {
     var property = new Cesium.SampledPositionProperty();
     var length = 100000;
     for (var i = 0; i <= length; i += 1000) {
       var timeUse = Cesium.JulianDate.addSeconds(
-        this._time1,
+        this._endTime,
         i,
         new Cesium.JulianDate()
       );
@@ -210,37 +213,6 @@ PlanModel.prototype.computePathAfterTime = function (_positions) {
     return property;
   }
 }
-
-// PlanModel.prototype.render = function () {
-//   let viewer = this.viewer;
-//   let that = this;
-//   let isShow = false;
-//   let middleBeforeTime = Cesium.JulianDate.addSeconds(that._middleTime, -2, new Cesium.JulianDate());
-//   var listenser = function () {
-//     if (viewer.clock.currentTime >= middleBeforeTime) {
-//       if (!isShow) {
-//         if (that._entityModel) {
-//           that._entityModel.orientation = that._endOrition;
-//         }
-//       }
-//     } else if (viewer.clock.currentTime < middleBeforeTime && viewer.clock.currentTime >= that._startTime) {
-//       if (that._orientation) {
-//         that._entityModel.orientation = that._orientation;
-//       }
-//     }
-//     // else {
-//     //   that._entityModel.orientation = that._orientation;
-//     // }
-//     if (viewer.clock.currentTime > that._middleTime) {
-//       isShow = true;
-//     }
-//     if (isShow) {
-//       viewer.scene.preRender.removeEventListener(listenser);
-//     }
-//   }
-
-//   viewer.scene.preRender.addEventListener(listenser);
-// }
 
 PlanModel.prototype.show = function () {
   if (this._entityModel) {
@@ -253,8 +225,6 @@ PlanModel.prototype.hide = function () {
     this._entityModel.show = false;
   }
 }
-
-
 
 
 Object.defineProperties(PlanModel, {
@@ -278,9 +248,9 @@ Object.defineProperties(PlanModel, {
       }
     }
   },
-  modelStartTime: {
+  startTime: {
     get: function () {
-      return this._time0;
+      return this._startTime;
     },
     set: function (value) {
       if (value) {
@@ -288,9 +258,9 @@ Object.defineProperties(PlanModel, {
       }
     }
   },
-  modelEndTime: {
+  endTime: {
     get: function () {
-      return this._time1;
+      return this._endTime;
     },
     set: function (value) {
       if (value) {
@@ -306,31 +276,8 @@ Object.defineProperties(PlanModel, {
       if (value) {
         this._positions = value;
       }
-
     }
   },
-  startTime: {
-    get: function () {
-      return this._time.start;
-    },
-    set: function (value) {
-      if (value) {
-        this._time.start = value;
-      }
-
-    }
-  },
-  endTime: {
-    get: function () {
-      return this._time.end;
-    },
-    set: function (value) {
-      if (value) {
-        this._time.end = value;
-      }
-    }
-  },
-
   show: {
     get: function () {
       return this._show;
