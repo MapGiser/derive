@@ -1,3 +1,11 @@
+/*
+ * @Author: your name
+ * @Date: 2021-03-31 10:34:28
+ * @LastEditTime: 2021-04-06 16:05:11
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \derive\src\js\planPath.js
+ */
 
 function PlanPath(options) {
   if (!options.viewer) {
@@ -5,6 +13,7 @@ function PlanPath(options) {
   }
   this.viewer = options.viewer;
   this._entityModel = null;
+  this._eventType = 'path';
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
 
