@@ -9,15 +9,21 @@ function PlanEvent(options) {
   this._endTime = Cesium.defaultValue(options.endTime, null);
   this._eventType = Cesium.defaultValue(options.eventType, null);
   this._emissionRate = Cesium.defaultValue(options.emissionRate, 180);
+  this._position = Cesium.defaultValue(options.position,null);
+  this._positionOringon = Cesium.defaultValue(options.positionOringon,null);
+  this._positionEnd = Cesium.defaultValue(options.positionEnd,null);
+  this._event = Cesium.defaultValue(options.event,null);
+
 }
 
 PlanEvent.prototype.addEvent = function (options) {
   let viewer = this._viewer;
   let eventType = options.eventType;
   if (typeof (eventType) != "undefined" && eventType != null) {
+    this._eventType = eventType;
     let event = this.addEventByEventType(options);
     if (event) {
-      this.event = viewer.scene.primitives.add(event);
+      this._event = viewer.scene.primitives.add(event);
       return event;
     }
   }
@@ -29,7 +35,7 @@ PlanEvent.prototype.addEventByEventType = function (options) {
     let event = null;
     switch (eventType) {
       case planMode.fire:
-        event = this.addFireEvent(options);
+        event = this.addFireEvent();
         break;
       case planMode.fireworks:
         event = this.addFfireWorksEvent(options);
@@ -45,31 +51,30 @@ PlanEvent.prototype.addEventByEventType = function (options) {
   }
 }
 
-PlanEvent.prototype.addFireEvent = function (options) {
-  let position = options.position;
+PlanEvent.prototype.addFireEvent = function () {
+  let position = this._position;
   let startScale = 1.0;
   let endScale = 1.0;
   let that = this;
   if (position) {
-    this._position = position;
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
     return new Cesium.ParticleSystem({
       modelMatrix: modelMatrix,
-      speed: options.speed || 15,
-      lifetime: options.lifetime || 0.8,
+      speed: this._speed || 15,
+      lifetime: this._lifetime || 0.8,
       particleLife: 0.5,
       show: true,
       startScale: 1,
       endScale: 1,
-      emitter: options.emitter || new Cesium.ConeEmitter(Cesium.Math.toRadians(55.0)),//new Cesium.BoxEmitter(new Cesium.Cartesian3(0.9,1.5,1.9)),
-      image: options.image || './static/data/img/fire.png',
-      emissionRate: options.emissionRate || 180.0,
-      startColor: options.startColor || Cesium.Color.fromCssColorString('#ffffff'),
-      endColor: options.endColor || Cesium.Color.fromCssColorString('#ffa000').withAlpha(0.6),
-      imageSize: options.imageSize || new Cesium.Cartesian2(5, 2.5),
-      updateCallback: options.updateCallback || applyGravity,
-      mass: options.mass || 300,
-      sizeInMeters: options.sizeInMeters || true
+      emitter: this._emitter || new Cesium.ConeEmitter(Cesium.Math.toRadians(55.0)),//new Cesium.BoxEmitter(new Cesium.Cartesian3(0.9,1.5,1.9)),
+      image: this._image || './static/data/img/fire.png',
+      emissionRate: this._emissionRate || 180.0,
+      startColor: this._startColor || Cesium.Color.fromCssColorString('#ffffff'),
+      endColor: this._endColor || Cesium.Color.fromCssColorString('#ffa000').withAlpha(0.6),
+      imageSize: this._imageSize || new Cesium.Cartesian2(5, 2.5),
+      updateCallback: this._updateCallback || applyGravity,
+      mass: this._mass || 300,
+      sizeInMeters: this._sizeInMeters || true
     })
   }
 
@@ -80,26 +85,26 @@ PlanEvent.prototype.addFireEvent = function (options) {
     if (particle) {
       let time = that._viewer.clock.currentTime;
       if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        that.event.startScale = that.event.endScale = 0.01;
-        that.event.image = options.image;
-        // that.event.startColor = that.event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+        that._event.startScale = that._event.endScale = 0.01;
+        that._event.image = that._image;
+        // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
       } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
-        // that.event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-        that.event.image = null;
-        that.event.startScale = that.event.endScale = 0.01;
+        // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+        that._event.image = null;
+        that._event.startScale = that._event.endScale = 0.01;
       } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
-        that.event.emissionRate = options.emissionRate || 180;
-        that.event.startScale = startScale;
-        that.event.image = options.image;
-        that.event.endScale = endScale;
+        that._event.emissionRate = that._emissionRate || 180;
+        that._event.startScale = startScale;
+        that._event.image = that._image;
+        that._event.endScale = endScale;
       } else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        that.event.startScale = startScale;
-        that.event.image = options.image;
-        that.event.endScale = endScale;
+        that._event.startScale = startScale;
+        that._event.image = that._image;
+        that._event.endScale = endScale;
 
         let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
         if (emissionRate < 0.1) emissionRate = 0.01;
-        that.event.emissionRate = emissionRate * that._emissionRate;
+        that._event.emissionRate = emissionRate * that._emissionRate;
       }
     }
   }
@@ -217,16 +222,14 @@ PlanEvent.prototype.computerAzimuth = function (pos1, pos3) {
 }
 
 PlanEvent.prototype.addWaterEvent = function (options) {
-  let positionOringon = options.positionOringon;//pos1
-  let positionEnd = options.positionEnd;//pos3
-  this._positionOringon = positionOringon;
-  this._positionEnd = positionEnd;
+  let positionOringon = this._positionOringon;//pos1
+  let positionEnd = this._positionEnd;//pos3
   if (!positionOringon || !positionEnd) return;
-  let offsetHeight = options.offsetHeight || 3.4;
-  let image = options.image || './static/data/img/pq.png';
-  let emissionRate = options.emissionRate || 50;
-  let startScale = options.startScale || 1;
-  let endScale = options.endScale || 1;
+  let offsetHeight = this._offsetHeight || 3.4;
+  let image = this._image || './static/data/img/pq.png';
+  let emissionRate = this._emissionRate || 50;
+  let startScale = this._startScale || 1;
+  let endScale = this._endScale || 1;
   let gravity = -1;
   var angle = this.computerAzimuth(positionOringon, positionEnd);//方位角
   var gravityScratch = new Cesium.Cartesian3();
@@ -361,25 +364,25 @@ PlanEvent.prototype.addWaterEvent = function (options) {
 
     let time = that._viewer.clock.currentTime;
     if (Cesium.JulianDate.lessThan(time, that._startTime)) {
-      that.event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-      that.event.image = null;
+      that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+      that._event.image = null;
 
-      that.event.startScale = that.event.endScale = 0.01;
-      // that.event.show = false;
+      that._event.startScale = that._event.endScale = 0.01;
+      // that._event.show = false;
     } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-      // that.event.emissionRate = that._emissionRate;
-      // that.event.show = true;
-      that.event.startScale = startScale
-      that.event.image = image;
-      that.event.startColor = new Cesium.Color(1, 1, 1, 0.6);
-      that.event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4)
-      that.event.endScale = endScale;
+      // that._event.emissionRate = that._emissionRate;
+      // that._event.show = true;
+      that._event.startScale = startScale
+      that._event.image = image;
+      that._event.startColor = new Cesium.Color(1, 1, 1, 0.6);
+      that._event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4)
+      that._event.endScale = endScale;
     } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-      // that.event.emissionRate = 0.001;
-      // that.event.show = false;
-      that.event.startScale = that.event.endScale = 0.01;
-      that.event.image = null;
-      that.event.startColor = that.event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+      // that._event.emissionRate = 0.001;
+      // that._event.show = false;
+      that._event.startScale = that._event.endScale = 0.01;
+      that._event.image = null;
+      that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
     }
   }
 
@@ -401,7 +404,7 @@ PlanEvent.prototype.addWaterEvent = function (options) {
     emitter: new Cesium.CircleEmitter(0.5),
     modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(positionOringon),//computeModelMatrix(entity, viewer.clock.currentTime),
     emitterModelMatrix: computeEmitterModelMatrix(),
-    updateCallback: options.updateCallback || applyGravity,
+    updateCallback: this._updateCallback || applyGravity,
     sizeInMeters: true
   })
 
