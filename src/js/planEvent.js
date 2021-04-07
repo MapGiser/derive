@@ -9,10 +9,12 @@ function PlanEvent(options) {
   this._endTime = Cesium.defaultValue(options.endTime, null);
   this._eventType = Cesium.defaultValue(options.eventType, null);
   this._emissionRate = Cesium.defaultValue(options.emissionRate, 180);
-  this._position = Cesium.defaultValue(options.position,null);
-  this._positionOringon = Cesium.defaultValue(options.positionOringon,null);
-  this._positionEnd = Cesium.defaultValue(options.positionEnd,null);
-  this._event = Cesium.defaultValue(options.event,null);
+  this._position = Cesium.defaultValue(options.position, null);
+  this._positionOringon = Cesium.defaultValue(options.positionOringon, null);
+  this._positionEnd = Cesium.defaultValue(options.positionEnd, null);
+  this._event = Cesium.defaultValue(options.event, null);
+  this._fireWorksBearAngle = Cesium.defaultValue(options.fireWorksBearAngle, 0.0);
+  this._fireWorksLevelAngle = Cesium.defaultValue(options.fireWorksAngle, 0.0);
 
 }
 
@@ -111,41 +113,58 @@ PlanEvent.prototype.addFireEvent = function () {
 }
 
 PlanEvent.prototype.addFfireWorksEvent = function (options) {
-  let position = options.position;
+  let position = this._position;
+
+  var emitterModelMatrix = new Cesium.Matrix4();
+  var translation = new Cesium.Cartesian3();
+  var rotation = new Cesium.Quaternion();
+  // var hpr = new Cesium.HeadingPitchRoll();
+  var hpr = new Cesium.HeadingPitchRoll(this._fireWorksBearAngle, this._fireWorksLevelAngle, 0);
+  var trs = new Cesium.TranslationRotationScale();
+
+  function computeEmitterModelMatrix() {
+    //喷泉位置
+    trs.translation = Cesium.Cartesian3.fromElements(0, 0, 0.1, translation);
+    trs.rotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, rotation);
+
+    return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
+  }
   if (position) {
-    this._position = position;
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
     return new Cesium.ParticleSystem({
       image: './static/data/img/smoke.png',
       modelMatrix: modelMatrix,
-      show: false,
-      startColor: options.startColor || Cesium.Color.fromCssColorString('#c98d33').withAlpha(0.7),
-      endColor: options.endColor || Cesium.Color.BLACK.withAlpha(0.05),
+      show: true,
+      startColor: options.startColor || Cesium.Color.fromCssColorString('#c98d33').withAlpha(0.5),
+      endColor: options.endColor || Cesium.Color.BLACK.withAlpha(0.15),
       startScale: options.startScale || 2.0,
-      endScale: options.endScale || 4.0,
-      minimumParticleLife: options.minimumParticleLife || 1.2,
-      maximumParticleLife: options.maximumParticleLife || 3.1,
-      minimumSpeed: options.maximumParticleLife || 3.0,
-      maximumSpeed: options.maximumParticleLife || 10.0,
+      endScale: options.endScale || 3.0,
+      // minimumParticleLife: options.minimumParticleLife || 1.2,
+      // maximumParticleLife: options.maximumParticleLife || 3.1,
+      minimumSpeed: options.minimumSpeed || 3.0,
+      maximumSpeed: options.maximumSpeed || 5.0,
       imageSize: options.imageSize || new Cesium.Cartesian2(5.0, 5.0),
-      emissionRate: options.imageSize || 6.0,
-      bursts: [
-        // these burst will occasionally sync to create a multicolored effect
-        new Cesium.ParticleBurst({ time: 5.0, minimum: 1, maximum: 10 }),
-        new Cesium.ParticleBurst({ time: 10.0, minimum: 5, maximum: 10 }),
-        new Cesium.ParticleBurst({ time: 15.0, minimum: 10, maximum: 10 })
-      ],
-      lifetime: 10.0,
-      emitter: new Cesium.CircleEmitter(2.0),
-      sizeInMeters: true
+      emissionRate: options.emissionRate || 3.0,
+      // bursts: [
+      //   // these burst will occasionally sync to create a multicolored effect
+      //   new Cesium.ParticleBurst({ time: 5.0, minimum: 1, maximum: 10 }),
+      //   new Cesium.ParticleBurst({ time: 10.0, minimum: 3, maximum: 5 }),
+      //   new Cesium.ParticleBurst({ time: 15.0, minimum: 2, maximum: 1 })
+      // ],
+      lifetime: 25.0,
+      emitter: new Cesium.CircleEmitter(0.5),
+      sizeInMeters: true,
+      emitterModelMatrix: computeEmitterModelMatrix(),
     })
   }
+
+
+
 }
 
 PlanEvent.prototype.addExplodeEvent = function (options) {
-  let position = options.position;
+  let position = this._position
   if (position) {
-    this._position = position;
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
     let emitterModelMatrixScratch = new Cesium.Matrix4();
     //计算偏移
@@ -161,8 +180,8 @@ PlanEvent.prototype.addExplodeEvent = function (options) {
     var particlePositionScratch = new Cesium.Cartesian3();
     //粒子大小
     var normalSize = size;
-    var minLife = 1.3;
-    var maxLife = 2.0;
+    var minLife = 4.3;
+    var maxLife = 5.0;
     //计算生命周期比例  0-----1之间
     var life = normalSize * (maxLife - minLife) + minLife;
     // 添加粒子
@@ -170,7 +189,7 @@ PlanEvent.prototype.addExplodeEvent = function (options) {
     bursts.push(new Cesium.ParticleBurst({
       time: 2.2,//Cesium.Math.nextRandomNumber() * 16.0,
       minimum: 2.0,
-      maximum: 2.0 * 1.5
+      maximum: 2.0 * 2.5
     }));
     var force = function (particle) {
       //根据粒子的位置计算偏移的局部坐标
@@ -184,14 +203,20 @@ PlanEvent.prototype.addExplodeEvent = function (options) {
       endColor: options.endColor || Cesium.Color.fromCssColorString('#c98d33').withAlpha(0.15),
       image: './static/data/img/smoke.png',
       particleLife: life,
-      speed: 50.0,
-      show: false,
-      imageSize: new Cesium.Cartesian2(5, 4),
+      speed: 15.0,
+      show: true,
+      imageSize: new Cesium.Cartesian2(3, 4),
       emissionRate: 0,
-      emitter: new Cesium.SphereEmitter(1.5),
+      emitter: new Cesium.SphereEmitter(2.0),
       bursts: bursts,
       lifetime: 5.0,
       updateCallback: force,
+      // bursts: [
+      //   // these burst will occasionally sync to create a multicolored effect
+      //   new Cesium.ParticleBurst({ time: 5.0, minimum: 1, maximum: 10 }),
+      //   new Cesium.ParticleBurst({ time: 10.0, minimum: 3, maximum: 5 }),
+      //   new Cesium.ParticleBurst({ time: 15.0, minimum: 2, maximum: 1 })
+      // ],
       modelMatrix: modelMatrix,
       emitterModelMatrix: emitterModelMatrix,
       sizeInMeters: true
@@ -411,14 +436,16 @@ PlanEvent.prototype.addWaterEvent = function (options) {
 }
 
 
-Object.defineProperties(PlanEvent, {
+Object.defineProperties(PlanEvent.prototype, {
   emissionRate: {
     get: function () {
       return this._emissionRate;
     },
     set: function (value) {
       if (Cesium.defined(value)) {
-        this._emissionRate = value;
+        if (this._event) {
+          this._event.emissionRate = value;
+        }
       }
     }
   },
@@ -449,6 +476,58 @@ Object.defineProperties(PlanEvent, {
     set: function (value) {
       if (value) {
         this._eventType = value;
+      }
+    }
+  },
+  fireWorksLevelAngle: {
+    get: function () {
+      return this._fireWorksLevelAngle;
+    },
+    set: function (value) {
+      this._fireWorksLevelAngle = value;
+
+      var emitterModelMatrix = new Cesium.Matrix4();
+      var translation = new Cesium.Cartesian3();
+      var rotation = new Cesium.Quaternion();
+      // var hpr = new Cesium.HeadingPitchRoll();
+      var hpr = new Cesium.HeadingPitchRoll(this._fireWorksBearAngle, this._fireWorksLevelAngle, 0);
+      var trs = new Cesium.TranslationRotationScale();
+
+      function computeEmitterModelMatrix() {
+        //喷泉位置
+        trs.translation = Cesium.Cartesian3.fromElements(0, 0, 0.1, translation);
+        trs.rotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, rotation);
+
+        return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
+      }
+      if (this._event) {
+        this._event.emitterModelMatrix = computeEmitterModelMatrix();
+      }
+    }
+  },
+  fireWorksBearAngle: {
+    get: function () {
+      return this._fireWorksBearAngle;
+    },
+    set: function (value) {
+      this._fireWorksBearAngle = value;
+
+      var emitterModelMatrix = new Cesium.Matrix4();
+      var translation = new Cesium.Cartesian3();
+      var rotation = new Cesium.Quaternion();
+      // var hpr = new Cesium.HeadingPitchRoll();
+      var hpr = new Cesium.HeadingPitchRoll(this._fireWorksBearAngle, this._fireWorksLevelAngle, 0);
+      var trs = new Cesium.TranslationRotationScale();
+
+      function computeEmitterModelMatrix() {
+        //喷泉位置
+        trs.translation = Cesium.Cartesian3.fromElements(0, 0, 0.1, translation);
+        trs.rotation = Cesium.Quaternion.fromHeadingPitchRoll(hpr, rotation);
+
+        return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
+      }
+      if (this._event) {
+        this._event.emitterModelMatrix = computeEmitterModelMatrix();
       }
     }
   }
