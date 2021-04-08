@@ -57,18 +57,14 @@ PlanModel.prototype.addModel = function () {
   }
   if (this._positions && this._time) {
     //位于时间段之前的位置
-    var positionBefore = this.computePathBeforeTime(this._positions);
+    this._positionBefore = this.computePathBeforeTime(this._positions);
     //位于时间段内的位置
-    var positionIn = this.computePathInTime(this._positions, this._time);
+    this._positionIn = this.computePathInTime(this._positions);
     //位于时间段之后的位置
-    var positionAfter = this.computePathAfterTime(this._positions);
+    this._positionAfter = this.computePathAfterTime(this._positions);
     // 四元数
-    this._orientation = this.initOrientation(positionIn);
-    // this._orientation1 = this.initOrientation(this._orientationStartTime);
-    // this._orientation2 = this.initOrientation(this._orientationEndTime);
+    this._orientation = this.initOrientation(this._positionIn);
     // 用于最后矫正飞机的姿态
-    // this._startOrition = this.initOrientation(positionBefore);
-    // this._endOrition = this.initOrientation(positionAfter);
     this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
     this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
   }
@@ -79,19 +75,19 @@ PlanModel.prototype.addModel = function () {
     this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
       if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
         if (entity) {
-          entity.orientation = this._startOrition;
+          entity.orientation = that._startOrition;
         }
-        return positionBefore.getValue(time, new Cesium.Cartesian3());
+        return that._positionBefore.getValue(time, new Cesium.Cartesian3());
       } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
         if (entity) {
           entity.orientation = that._endOrition;
         }
-        return positionAfter.getValue(time, new Cesium.Cartesian3());
+        return that._positionAfter.getValue(time, new Cesium.Cartesian3());
       } else {
         if (entity) {
           entity.orientation = that._orientation;
         }
-        return positionIn.getValue(time, new Cesium.Cartesian3());
+        return that._positionIn.getValue(time, new Cesium.Cartesian3());
       }
     }, false);
     entity = this._modelGraphic;
@@ -102,19 +98,19 @@ PlanModel.prototype.addModel = function () {
       position: new Cesium.CallbackProperty(function (time) {
         if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
           if (entity) {
-            entity.orientation = this._startOrition;
+            entity.orientation = that._startOrition;
           }
-          return positionBefore.getValue(time, new Cesium.Cartesian3());
+          return that._positionBefore.getValue(time, new Cesium.Cartesian3());
         } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
           if (entity) {
             entity.orientation = that._endOrition;
           }
-          return positionAfter.getValue(time, new Cesium.Cartesian3());
+          return that._positionAfter.getValue(time, new Cesium.Cartesian3());
         } else {
           if (entity) {
             entity.orientation = that._orientation;
           }
-          return positionIn.getValue(time, new Cesium.Cartesian3());
+          return that._positionIn.getValue(time, new Cesium.Cartesian3());
         }
       }, false)
 
@@ -183,11 +179,9 @@ PlanModel.prototype.computePathInTime = function (_positions) {
       var position = _positions[i];
       property.addSample(timeUse, position);
       if (i == 1) {
-        // propertyStart.addSample(timeUse, position);
         this._orientationStartTime = timeUse;
       }
       if (i === length - 1) {
-        // propertyEnd.addSample(timeUse, _positions[length - 2]);
         this._orientationEndTime = timeUse;
       }
     }
@@ -227,7 +221,7 @@ PlanModel.prototype.hide = function () {
 }
 
 
-Object.defineProperties(PlanModel, {
+Object.defineProperties(PlanModel.prototype, {
   modelPath: {
     get: function () {
       return this._modelPath;
@@ -254,7 +248,18 @@ Object.defineProperties(PlanModel, {
     },
     set: function (value) {
       if (value) {
-        this.time0 = value;
+        this.time0 = this._startTime = value;
+
+        this._positionBefore = this.computePathBeforeTime(this._positions);
+        //位于时间段内的位置
+        this._positionIn = this.computePathInTime(this._positions);
+        //位于时间段之后的位置
+        this._positionAfter = this.computePathAfterTime(this._positions);
+        // 四元数
+        this._orientation = this.initOrientation(this._positionIn);
+        // 用于最后矫正飞机的姿态
+        this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
+        this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
       }
     }
   },
@@ -264,7 +269,18 @@ Object.defineProperties(PlanModel, {
     },
     set: function (value) {
       if (value) {
-        this.time1 = value;
+        this.time1 = this._endTime = value;
+
+        this._positionBefore = this.computePathBeforeTime(this._positions);
+        //位于时间段内的位置
+        this._positionIn = this.computePathInTime(this._positions);
+        //位于时间段之后的位置
+        this._positionAfter = this.computePathAfterTime(this._positions);
+        // 四元数
+        this._orientation = this.initOrientation(this._positionIn);
+        // 用于最后矫正飞机的姿态
+        this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
+        this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
       }
     }
   },
