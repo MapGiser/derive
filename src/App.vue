@@ -5,10 +5,12 @@
       <button @click="stopDraw()">结束绘制</button> -->
       <button @click="loadEvent()">添加灾害</button>
       <button @click="loadPath()">添加路线</button>
-      <!-- <button @click="loadPath1()">添加路线1</button> -->
+      <button @click="loadPath1()">添加路线1</button>
+      <button @click="resetFireStartTime()">修改火开始时间</button>
+      <button @click="resetFireEndTime()">修改火结束时间</button>
+      <button @click="resetModelStartTime()">修改模型开始时间</button>
       <button @click="play()">播放</button>
-      <button @click="rePlay()">重新播放</button>
-      <button @click="destory()">结束</button>
+      <button @click="destory()">删除</button>
       <button @click="import1()">导入</button>
       <button @click="exports1()">导出</button>
     </div>
@@ -70,12 +72,26 @@ export default {
         ),
         model: {
           uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
-          minimumPixelSize: 0.1,
-          maximumScale: 0.3
+          minimumPixelSize: 128
+          // maximumScale: 0.3
+        }
+      });
+
+      var entity2 = viewer.entities.add({
+        position: new Cesium.Cartesian3(
+          -1941790.9267206651,
+          -4779499.932850377,
+          3737953.120678378
+        ),
+        model: {
+          uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
+          minimumPixelSize: 128
+          // maximumScale: 0.3
         }
       });
 
       window.entity1 = entity1;
+      window.entity2 = entity2;
 
       viewer.zoomTo(entity1);
 
@@ -107,6 +123,7 @@ export default {
        * startTime火的开始时间  应该比整个预案的开始时间大，比预案的结束时间早
        * endTime 火的结束时间  应该比整个预案的开始时间大，比预案的结束时间早
        * eventType火的类型，表示发生的事件是火
+       * position 添加事件的位置
        */
       planDraw.startDraw("point", function(val) {
         viewer.clock.currentTime = window.start1.clone();
@@ -123,10 +140,51 @@ export default {
           endTime: stop,
           position: position
         };
+        // 新建事件类型
         let planEvent = new PlanEvent(options);
+        window.planEvent = planEvent;
+        //添加火
         planEvent.addEvent({ eventType: planMode.fire });
+        // 添加到控制器中
         planControl.add(planEvent);
+
+        /**
+         * 修改时间
+         *
+         * */
+
+        // planEvent.startTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   20,
+        //   new Cesium.JulianDate()
+        // );
+        // planEvent.endTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   35,
+        //   new Cesium.JulianDate()
+        // );
       });
+    },
+    resetFireStartTime() {
+      planEvent.startTime = Cesium.JulianDate.addSeconds(
+        window.start1,
+        15,
+        new Cesium.JulianDate()
+      );
+    },
+    resetFireEndTime() {
+      planEvent.endTime = Cesium.JulianDate.addSeconds(
+        window.start1,
+        20,
+        new Cesium.JulianDate()
+      );
+    },
+    resetModelStartTime() {
+      planModel.startTime = Cesium.JulianDate.addSeconds(
+        window.start1,
+        20,
+        new Cesium.JulianDate()
+      );
     },
     play() {
       window.viewer.clock.currentTime = window.start1;
@@ -172,44 +230,71 @@ export default {
       planDraw.startDraw("polyline", function(val) {
         var position = val.position;
         /**
-         * 添加路径和模型 表示模型在这表路径上运动
+         * 添加路径 表示模型在这表路径上运动
+         * viewer: 全局viewer对象
+         * position   模型运路径坐标  数组类型
+         */
+
+        let pathOptions = {
+          viewer: window.viewer,
+          position: position
+        };
+        //新建路径类型
+        let planPath = new PlanPath(pathOptions);
+        //添加路径
+        planPath.addPath();
+        //添加到控制器
+        planControl.add(planPath);
+
+        /**
+         * 添加模型 表示模型在这表路径上运动
+         * viewer: 全局viewer对象
          * model      表示已经添加在场景中的模型 [和modelPath二选一]
          * modelPath  模型的url [和model二选一]
          * startTime  模型开始运动的时间  应该比整个预案的开始时间大，比预案的结束时间早
          * endTime    模型结束运动的时间  应该比整个预案的开始时间大，比预案的结束时间早
          * position   模型运路径坐标  数组类型
          */
-        let pathOptions = {
-          viewer: window.viewer,
-          position: position
-        };
-
-        let planPath = new PlanPath(pathOptions);
-        planPath.addPath();
-        planControl.add(planPath);
-
         let options = {
           viewer: window.viewer,
-          model: window.entity1,
+          // model: window.entity1,
           modelPath: modelPath,
           startTime: modelStartTime,
           endTime: modelEndTime,
           position: position
         };
 
+        //新建事件类型
         let planModel = new PlanModel(options);
+        //添加模型
         planModel.addModel();
+        //添加到控制器
         planControl.add(planModel);
         window.planModel = planModel;
 
         /**
-         * 添加喷水事件 表示喷水
+         * 修改时间
          *
+         * */
+
+        // planModel.startTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   20,
+        //   new Cesium.JulianDate()
+        // );
+        // planModel.endTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   35,
+        //   new Cesium.JulianDate()
+        // );
+
+        /**
+         * 添加喷水事件 表示喷水
+         * viewer viewer全局对象
          * positionOringon 开始喷水的坐标位置 也就是模型运动的的坐标点位的最后一个位置
          * positionEnd  喷水到的坐标位置 也就是起火的位置
          * startTime  开始喷水的时间  应该模型运动的结束时间晚，比预案的结束时间早
          * endTime    结束喷水的时间  应该模型运动的结束时间晚，比预案的结束时间早
-         * eventType  喷水事件类型
          *
          * 开始时间和结束时间间隔尽量大一些，最少30秒
          */
@@ -220,9 +305,11 @@ export default {
           startTime: modelEndTime,
           endTime: modelEndTime1
         };
-
+        //新建事件类型
         let planEvent_Water = new PlanEvent(options1);
+        //根据类型添加事件
         planEvent_Water.addEvent({ eventType: planMode.water });
+        //添加带控制器
         planControl.add(planEvent_Water);
       });
     },
@@ -253,7 +340,7 @@ export default {
 
         let options = {
           viewer: window.viewer,
-          model: window.entity1,
+          model: window.entity2,
           modelPath: modelPath,
           startTime: modelStartTime,
           endTime: modelEndTime,
