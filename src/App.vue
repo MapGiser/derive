@@ -3,9 +3,14 @@
     <div class="menu">
       <!-- <button @click="startDraw()">绘制</button>
       <button @click="stopDraw()">结束绘制</button> -->
-      <button @click="loadEvent()">添加灾害</button>
+      <button @click="loadfire()">添加火灾</button>
+      <button @click="loadfireWorks()">添加烟</button>
       <button @click="loadPath()">添加路线</button>
       <button @click="loadPath1()">添加路线1</button>
+      <button @click="resetBaer()">修改烟的方位角度</button>
+      <button @click="resetLevel()">修改烟的风力角度</button></br>
+      <button @click="resetWaterOrigon()">修改水的起始位置</button>
+      <button @click="resetWaterEnd()">修改水的终点位置</button></br>
       <button @click="resetFireStartTime()">修改火开始时间</button>
       <button @click="resetFireEndTime()">修改火结束时间</button>
       <button @click="resetModelStartTime()">修改模型开始时间</button>
@@ -77,21 +82,20 @@ export default {
         }
       });
 
-      var entity2 = viewer.entities.add({
-        position: new Cesium.Cartesian3(
-          -1941790.9267206651,
-          -4779499.932850377,
-          3737953.120678378
-        ),
-        model: {
-          uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
-          minimumPixelSize: 128
-          // maximumScale: 0.3
-        }
-      });
+      // var entity2 = viewer.entities.add({
+      //   position: new Cesium.Cartesian3(
+      //     -1941790.9267206651,
+      //     -4779499.932850377,
+      //     3737953.120678378
+      //   ),
+      //   model: {
+      //     uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
+      //     minimumPixelSize: 128
+      //     // maximumScale: 0.3
+      //   }
+      // });
 
       window.entity1 = entity1;
-      window.entity2 = entity2;
 
       viewer.zoomTo(entity1);
 
@@ -108,7 +112,20 @@ export default {
       //   }
       // });
     },
-    loadEvent() {
+
+    resetBaer() {
+      planEvent1.fireWorksBearAngle = 0.2;
+    },
+    resetLevel() {
+      planEvent1.fireWorksLevelAngle = 0.2;
+    },
+    resetWaterOrigon() {
+      planEvent_Water.positionOringon = window.pathOptions[window.pathOptions.length -1]; 
+    },
+    resetWaterEnd() {
+      planEvent_Water.positionEnd = this.position;
+    },
+    loadfire() {
       var stop = Cesium.JulianDate.addSeconds(
         window.start1,
         60,
@@ -147,6 +164,63 @@ export default {
         planEvent.addEvent({ eventType: planMode.fire });
         // 添加到控制器中
         planControl.add(planEvent);
+
+        /**
+         * 修改时间
+         *
+         * */
+
+        // planEvent.startTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   20,
+        //   new Cesium.JulianDate()
+        // );
+        // planEvent.endTime = Cesium.JulianDate.addSeconds(
+        //   window.start1,
+        //   35,
+        //   new Cesium.JulianDate()
+        // );
+      });
+    },
+    loadfireWorks() {
+      var stop = Cesium.JulianDate.addSeconds(
+        window.start1,
+        60,
+        new Cesium.JulianDate()
+      );
+
+      var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
+      var that = this;
+      //添加火
+
+      /**
+       * startTime火的开始时间  应该比整个预案的开始时间大，比预案的结束时间早
+       * endTime 火的结束时间  应该比整个预案的开始时间大，比预案的结束时间早
+       * eventType火的类型，表示发生的事件是火
+       * position 添加事件的位置
+       */
+      planDraw.startDraw("point", function(val) {
+        viewer.clock.currentTime = window.start1.clone();
+        var position = val.position;
+        var posCopy = Cesium.Cartographic.fromCartesian(position);
+        if (posCopy.height < 0.5) {
+          posCopy.height += 1;
+        }
+        position = Cesium.Cartographic.toCartesian(posCopy);
+        that.position = position;
+        let options = {
+          viewer: window.viewer,
+          startTime: window.start1,
+          endTime: stop,
+          position: position
+        };
+        // 新建事件类型
+        let planEvent1 = new PlanEvent(options);
+        window.planEvent1 = planEvent1;
+        //添加火
+        planEvent1.addEvent({ eventType: planMode.fireworks });
+        // 添加到控制器中
+        planControl.add(planEvent1);
 
         /**
          * 修改时间
@@ -229,6 +303,8 @@ export default {
       var that = this;
       planDraw.startDraw("polyline", function(val) {
         var position = val.position;
+
+        window.pathOptions = position;
         /**
          * 添加路径 表示模型在这表路径上运动
          * viewer: 全局viewer对象
@@ -257,7 +333,7 @@ export default {
          */
         let options = {
           viewer: window.viewer,
-          // model: window.entity1,
+          model: window.entity1,
           modelPath: modelPath,
           startTime: modelStartTime,
           endTime: modelEndTime,
@@ -300,8 +376,8 @@ export default {
          */
         let options1 = {
           viewer: window.viewer,
-          positionOringon: position[position.length - 1],
-          positionEnd: that.position,
+          // positionOringon: position[position.length - 1],
+          // positionEnd: that.position,
           startTime: modelEndTime,
           endTime: modelEndTime1
         };
@@ -311,6 +387,7 @@ export default {
         planEvent_Water.addEvent({ eventType: planMode.water });
         //添加带控制器
         planControl.add(planEvent_Water);
+        window.planEvent_Water = planEvent_Water;
       });
     },
     loadPath1() {
