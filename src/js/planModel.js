@@ -91,7 +91,7 @@ PlanModel.prototype.addModel = function () {
       }
     }, false);
     entity = this._modelGraphic;
-  } else if (this._modelPath) {
+  } else if (this._modelPath && !this._model) {
     var entity = viewer.entities.add({
       orientation: this._orientation,
       model: this._modelGraphic,
