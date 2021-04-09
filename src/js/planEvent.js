@@ -14,7 +14,7 @@ function PlanEvent(options) {
   this._positionEnd = Cesium.defaultValue(options.positionEnd, null);
   this._event = Cesium.defaultValue(options.event, null);
   this._fireWorksBearAngle = Cesium.defaultValue(options.fireWorksBearAngle, 0.0);
-  this._fireWorksLevelAngle = Cesium.defaultValue(options.fireWorksAngle, 0.0);
+  this._fireWorksLevelAngle = Cesium.defaultValue(options.fireWorksLevelAngle, 0.0);
 
 }
 
@@ -122,6 +122,9 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
   var hpr = new Cesium.HeadingPitchRoll(this._fireWorksBearAngle, this._fireWorksLevelAngle, 0);
   var trs = new Cesium.TranslationRotationScale();
 
+  let startScale = 2.0;
+  let endScale = 3.0;
+
   function computeEmitterModelMatrix() {
     //喷泉位置
     trs.translation = Cesium.Cartesian3.fromElements(0, 0, 0.1, translation);
@@ -129,6 +132,39 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
 
     return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
   }
+
+  let that = this;
+  function applyGravity(particle, dt) {
+    var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
+    var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
+    if (particle) {
+      let time = that._viewer.clock.currentTime;
+      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+        that._event.startScale = that._event.endScale = 0.01;
+        // that._event.image = that._image;
+        // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+        // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+        // that._event.image = null;
+        that._event.startScale = that._event.endScale = 0.01;
+      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        // that._event.emissionRate = that._emissionRate || 180;
+        that._event.startScale = startScale;
+        // that._event.image = that._image;
+        that._event.endScale = endScale;
+      }
+      else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        // that._event.startScale = startScale;
+        // that._event.image = that._image;
+        // that._event.endScale = endScale;
+
+        // let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
+        // if (emissionRate < 0.1) emissionRate = 0.01;
+        // that._event.emissionRate = emissionRate * that._emissionRate;
+      }
+    }
+  }
+
   if (position) {
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
     return new Cesium.ParticleSystem({
@@ -143,7 +179,7 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
       // maximumParticleLife: options.maximumParticleLife || 3.1,
       minimumSpeed: options.minimumSpeed || 3.0,
       maximumSpeed: options.maximumSpeed || 5.0,
-      imageSize: options.imageSize || new Cesium.Cartesian2(5.0, 5.0),
+      imageSize: options.imageSize || new Cesium.Cartesian2(2.0, 2.0),
       emissionRate: options.emissionRate || 3.0,
       // bursts: [
       //   // these burst will occasionally sync to create a multicolored effect
@@ -152,13 +188,12 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
       //   new Cesium.ParticleBurst({ time: 15.0, minimum: 2, maximum: 1 })
       // ],
       lifetime: 25.0,
-      emitter: new Cesium.CircleEmitter(0.5),
+      emitter: new Cesium.CircleEmitter(1.0),
       sizeInMeters: true,
       emitterModelMatrix: computeEmitterModelMatrix(),
+      updateCallback: this._updateCallback || applyGravity,
     })
   }
-
-
 
 }
 
@@ -246,7 +281,7 @@ PlanEvent.prototype.computerAzimuth = function (pos1, pos3) {
 
 }
 
-PlanEvent.prototype.addWaterEvent = function (options) {
+PlanEvent.prototype.addWaterEvent = function () {
   let positionOringon = this._positionOringon;//pos1
   let positionEnd = this._positionEnd;//pos3
   if (!positionOringon || !positionEnd) return;
@@ -437,6 +472,34 @@ PlanEvent.prototype.addWaterEvent = function (options) {
 
 
 Object.defineProperties(PlanEvent.prototype, {
+  positionOringon: {
+    get: function () {
+      return this._positionOringon;
+    },
+    set: function (value) {
+      this._positionOringon = value;
+      if (!this._event) {
+        let event = this.addWaterEvent();
+        if (event) {
+          this._event = this._viewer.scene.primitives.add(event);
+        }
+      }
+    }
+  },
+  positionEnd: {
+    get: function () {
+      return this._positionEnd;
+    },
+    set: function (value) {
+      this._positionEnd = value;
+      if (!this._event) {
+        let event = this.addWaterEvent();
+        if (event) {
+          this._event = this._viewer.scene.primitives.add(event);
+        }
+      }
+    }
+  },
   emissionRate: {
     get: function () {
       return this._emissionRate;
