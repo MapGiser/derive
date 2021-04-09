@@ -92,8 +92,8 @@ PlanEvent.prototype.addFireEvent = function () {
         // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
       } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
         // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-        that._event.image = null;
-        that._event.startScale = that._event.endScale = 0.01;
+        // that._event.image = null;
+        // that._event.startScale = that._event.endScale = 0.01;
       } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
         that._event.emissionRate = that._emissionRate || 180;
         that._event.startScale = startScale;
@@ -146,7 +146,7 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
       } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
         // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
         // that._event.image = null;
-        that._event.startScale = that._event.endScale = 0.01;
+        // that._event.startScale = that._event.endScale = 0.01;
       } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
         // that._event.emissionRate = that._emissionRate || 180;
         that._event.startScale = startScale;
