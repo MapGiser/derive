@@ -8,6 +8,8 @@ function planControl(options) {
     console.error('viewer is required!');
   }
   this._viewer = options.viewer;
+  this._viewer.clock.startTime = Cesium.Iso8601.MINIMUM_VALUE;
+  this._viewer.clock.currentTime = Cesium.Iso8601.MINIMUM_VALUE;
   this._startTime = options.startTime;
   this._endTime = options.endTime;
   if (this._startTime && this._endTime) {
