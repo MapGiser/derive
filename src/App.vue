@@ -48,11 +48,7 @@ export default {
         70,
         new Cesium.JulianDate()
       );
-      //Make sure viewer is at the desired time.
-      viewer.clock.startTime = start.clone();
-      viewer.clock.currentTime = start.clone();
       viewer.clock.clockRange = Cesium.ClockRange.CLAMPED; //Loop at the end
-      // viewer.clock.clockRange = Cesium.ClockRange.UNBOUNDED; //Loop at the end
 
       viewer.scene.globe.depthTestAgainstTerrain = true;
 
@@ -143,7 +139,6 @@ export default {
        * position 添加事件的位置
        */
       planDraw.startDraw("point", function(val) {
-        viewer.clock.currentTime = window.start1.clone();
         var position = val.position;
         var posCopy = Cesium.Cartographic.fromCartesian(position);
         if (posCopy.height < 0.5) {
@@ -200,7 +195,6 @@ export default {
        * position 添加事件的位置
        */
       planDraw.startDraw("point", function(val) {
-        viewer.clock.currentTime = window.start1.clone();
         var position = val.position;
         var posCopy = Cesium.Cartographic.fromCartesian(position);
         if (posCopy.height < 0.5) {
@@ -297,7 +291,6 @@ export default {
         new Cesium.JulianDate()
       );
 
-      viewer.clock.currentTime = window.start1.clone();
 
       var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
       var that = this;
@@ -407,8 +400,6 @@ export default {
         68,
         new Cesium.JulianDate()
       );
-
-      viewer.clock.currentTime = window.start1.clone();
 
       var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
       var that = this;
