@@ -74,10 +74,11 @@ PlanModel.prototype.addModel = function () {
     this._modelGraphic.orientation = this._orientation;
     this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
       if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-        if (entity) {
-          entity.orientation = that._startOrition;
-        }
-        return that._positionBefore.getValue(time, new Cesium.Cartesian3());
+        // if (entity) {
+        //   entity.orientation = that._startOrition;
+        // }
+        let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
+        return position = position ? position : that._positions[0];
       } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
         if (entity) {
           entity.orientation = that._endOrition;
@@ -97,10 +98,13 @@ PlanModel.prototype.addModel = function () {
       model: this._modelGraphic,
       position: new Cesium.CallbackProperty(function (time) {
         if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-          if (entity) {
-            entity.orientation = that._startOrition;
-          }
-          return that._positionBefore.getValue(time, new Cesium.Cartesian3());
+          // if (entity) {
+          //   entity.orientation = that._startOrition;
+          // }
+          // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
+          // return that._positions[0];
+          let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
+          return position = position ? position : that._positions[0];
         } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
           if (entity) {
             entity.orientation = that._endOrition;
@@ -144,10 +148,10 @@ PlanModel.prototype.computePathBeforeTime = function (_positions) {
     var property = new Cesium.SampledPositionProperty();
     var timeBefore = Cesium.JulianDate.addSeconds(
       this._startTime,
-      -100000,
+      -10000,
       new Cesium.JulianDate()
     );
-    for (var i = 0; i <= 100000; i += 1000) {
+    for (var i = 0; i <= 10000; i += 1000) {
       var timeUse = Cesium.JulianDate.addSeconds(
         timeBefore,
         i,
