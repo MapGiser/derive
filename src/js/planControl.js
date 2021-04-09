@@ -156,6 +156,8 @@ planControl.prototype.fromJSON = function (jsonFile) {
             let position = item.position;
             let positionOringon = item.positionOringon;
             let positionEnd = item.positionEnd;
+            let fireWorksBearAngle = item.fireWorksBearAngle;
+            let fireWorksLevelAngle = item.fireWorksLevelAngle;
             if (startTime) {
               startTime = new Cesium.JulianDate.fromDate(new Date(startTime), new Cesium.JulianDate());
             }
@@ -188,7 +190,9 @@ planControl.prototype.fromJSON = function (jsonFile) {
               position: p ? p : lines,
               positionOringon: positionOringon,
               positionEnd: positionEnd,
-              eventType: eventType
+              eventType: eventType,
+              fireWorksBearAngle: fireWorksBearAngle || null,
+              fireWorksLevelAngle: fireWorksLevelAngle || null
             }
             let planEvent = new PlanEvent(obj);
             planEvent.addEvent({ eventType: eventType });
@@ -213,7 +217,7 @@ planControl.prototype.fromJSON = function (jsonFile) {
             let obj = {
               viewer: that._viewer,
               position: lines,
-              eventType:item.eventType
+              eventType: item.eventType
             }
 
             let planPath = new PlanPath(obj);
@@ -241,7 +245,7 @@ planControl.prototype.export = function () {
   let pathCollection = this._pathCollection;
 
 
-  let t, e, p, po, poCopy, pe, peCopy;
+  let t, e, p, po, poCopy, pe, peCopy, fireWorksBearAngle, fireWorksLevelAngle;
   let obj = {};
   modelCollection.forEach(item => {
     if (item._startTime) {
@@ -327,6 +331,8 @@ planControl.prototype.export = function () {
       position: lines,
       positionOringon: poCopy || null,
       positionEnd: peCopy || null,
+      fireWorksBearAngle: item._eventType === 1 ? item.fireWorksBearAngle : null,
+      fireWorksLevelAngle: item._eventType === 1 ? item.fireWorksLevelAngle : null,
       eventType: item._eventType
     }
     eventCollectionCopy.push(obj);
