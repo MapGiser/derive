@@ -15,6 +15,8 @@
       <button @click="resetFireEndTime()">修改火结束时间</button>
       <button @click="resetModelStartTime()">修改模型开始时间</button>
       <button @click="play()">播放</button>
+      <button @click="resetSpeed()">修改速度</button>
+      <button @click="resetSpeed1()">修改速度1</button>
       <button @click="destory()">删除</button>
       <button @click="import1()">导入</button>
       <button @click="exports1()">导出</button>
@@ -108,7 +110,12 @@ export default {
       //   }
       // });
     },
-
+    resetSpeed() {
+      planModel.speed = 60;
+    },
+    resetSpeed1() {
+      planModel.speed = 10;
+    },
     resetBaer() {
       planEvent1.fireWorksBearAngle = 0.2;
     },
@@ -116,7 +123,8 @@ export default {
       planEvent1.fireWorksLevelAngle = 0.2;
     },
     resetWaterOrigon() {
-      planEvent_Water.positionOringon = window.pathOptions[window.pathOptions.length -1]; 
+      planEvent_Water.positionOringon =
+        window.pathOptions[window.pathOptions.length - 1];
     },
     resetWaterEnd() {
       planEvent_Water.positionEnd = this.position;
@@ -291,7 +299,6 @@ export default {
         new Cesium.JulianDate()
       );
 
-
       var modelPath = "./static/data/model/CesiumAir/Cesium_Air.gltf";
       var that = this;
       planDraw.startDraw("polyline", function(val) {
@@ -329,7 +336,7 @@ export default {
           model: window.entity1,
           modelPath: modelPath,
           startTime: modelStartTime,
-          endTime: modelEndTime,
+          speed: 30,
           position: position
         };
 
