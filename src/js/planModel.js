@@ -14,6 +14,7 @@ function PlanModel(options) {
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
   this._eventType = 'model';
+  this._speed = Cesium.defaultValue(options.speed, 30);//km/h
 
 
   this._startTime = Cesium.defaultValue(options.startTime, null);
@@ -22,6 +23,13 @@ function PlanModel(options) {
 
   this._minTime = Cesium.Iso8601.MINIMUM_VALUE;
   this._maxTime = Cesium.Iso8601.MAXIMUM_VALUE;
+
+  //根据速度计算运动时间
+  if (this._positions) {
+    this._totalDistance = this.calcTotalDistance();
+    this._timeMoving = this._totalDistance / (this._speed * 1000 / 3600);
+    this._endTime = Cesium.JulianDate.addSeconds(this._startTime, this._timeMoving, new Cesium.JulianDate());
+  }
 
   if (!this._middleTime) {
     var timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
@@ -35,6 +43,17 @@ function PlanModel(options) {
 PlanModel.prototype.init = function () {
   if (this._modelPath) {
     this.addModel();
+  }
+}
+
+PlanModel.prototype.calcTotalDistance = function () {
+  let totalDistance = 0
+  if (this._positions && this._positions.length > 0) {
+    let position = this._positions;
+    for (let i = 0; i < position.length - 1; i++) {
+      totalDistance += Cesium.Cartesian3.distance(position[i], position[i + 1]);
+    }
+    return totalDistance;
   }
 }
 
@@ -267,6 +286,7 @@ Object.defineProperties(PlanModel.prototype, {
       }
     }
   },
+ 
   endTime: {
     get: function () {
       return this._endTime;
@@ -285,6 +305,32 @@ Object.defineProperties(PlanModel.prototype, {
         // 用于最后矫正飞机的姿态
         this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
         this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
+      }
+    }
+  },
+  speed: {
+    get: function () {
+      return this._speed;
+    },
+    set: function (value) {
+      if (Cesium.defined(value)) {
+        this._speed = value;
+        if (this._positions) {
+          this._totalDistance = this.calcTotalDistance();
+          this._timeMoving = this._totalDistance / (this._speed * 1000 / 3600);
+          this._endTime = Cesium.JulianDate.addSeconds(this._startTime, this._timeMoving, new Cesium.JulianDate());
+
+          this._positionBefore = this.computePathBeforeTime(this._positions);
+          //位于时间段内的位置
+          this._positionIn = this.computePathInTime(this._positions);
+          //位于时间段之后的位置
+          this._positionAfter = this.computePathAfterTime(this._positions);
+          // 四元数
+          this._orientation = this.initOrientation(this._positionIn);
+          // 用于最后矫正飞机的姿态
+          this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
+          this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
+        }
       }
     }
   },
