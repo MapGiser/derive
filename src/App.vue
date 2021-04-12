@@ -32,6 +32,9 @@ import PlanEvent from "@/js/planEvent.js";
 import planDraws from "@/js/planDraw.js";
 import planManage from "@/js/planManage.js";
 import planControls from "@/js/planControl.js";
+import dangerousArea from "@/js/dangerousArea.js";
+import EntityMode from "@/js/EntityMode.js";
+// import dangerousCarArea from "@/js/dangerousCarArea.js";
 
 export default {
   name: "App",
@@ -67,48 +70,84 @@ export default {
       });
       window.planControl = planControl;
 
+      let position = [-112.11067361278276,36.1088154143215];
+      let pos1 = Cesium.Cartesian3.fromDegrees(position[0],position[1],1);
+
+      var heading = Cesium.Math.toRadians(180);
+      var pitch = 0;
+      var roll = 0;
+      var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+      var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+        pos1,
+        hpr
+      );
+
       var entity1 = viewer.entities.add({
-        position: new Cesium.Cartesian3(
-          -1941790.9268206651,
-          -4779499.932850377,
-          3737953.120678378
-        ),
+        position: pos1,
+        orientation: orientation,
         model: {
           uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
-          minimumPixelSize: 128
+          minimumPixelSize: 128,
           // maximumScale: 0.3
+          shadows: false
         }
       });
 
-      // var entity2 = viewer.entities.add({
-      //   position: new Cesium.Cartesian3(
-      //     -1941790.9267206651,
-      //     -4779499.932850377,
-      //     3737953.120678378
-      //   ),
-      //   model: {
-      //     uri: "./static/data/model/CesiumAir/Cesium_Air.gltf",
-      //     minimumPixelSize: 128
-      //     // maximumScale: 0.3
-      //   }
-      // });
+      let position1 = [-112.11088361278276,36.1090154143215,0];
+      let pos2 = Cesium.Cartesian3.fromDegrees(position1[0],position1[1],0);
+
+      var heading = Cesium.Math.toRadians(75);
+      var pitch = 0;
+      var roll = 0;
+      var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+      var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+        pos2,
+        hpr
+      );
+
+      var entity2 = viewer.entities.add({
+        position: pos2,
+        orientation: orientation,
+        model: {
+          uri: "./static/data/model/GroundVehicle.glb",
+          minimumPixelSize: 128,
+          maximumScale: 1,
+          shadows: false
+        }
+      });
+
+      let p1 = {
+        lon: position[0],
+        lat:  position[1]
+      };
+
+      let options = {
+        viewer: viewer,
+        positionOrigin: p1,
+        baseHeading : 180,
+        entityType:EntityMode.air
+      };
+
+      let p2 = {
+        lon: position1[0],
+        lat:  position1[1]
+      };
+      let options1 = {
+        viewer: viewer,
+        positionOrigin: p2,
+        baseHeading : 75,
+        entityType:EntityMode.car
+      };
+
+      let areas = new dangerousArea(options);
+      let carArea = new dangerousArea(options1);
+
+      areas.addArea();
+      carArea.addArea();
 
       window.entity1 = entity1;
 
       viewer.zoomTo(entity1);
-
-      // viewer.camera.setView({
-      //   destination: Cesium.Cartesian3.fromDegrees(
-      //     -112.110693,
-      //     36.0994841,
-      //     1000
-      //   ),
-      //   orientation: {
-      //     heading: Cesium.Math.toRadians(358.3427926550179),
-      //     pitch: Cesium.Math.toRadians(-52.50529304678685),
-      //     roll: Cesium.Math.toRadians(359.99096998079574)
-      //   }
-      // });
     },
     resetSpeed() {
       planModel.speed = 60;
