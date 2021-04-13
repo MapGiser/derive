@@ -17,7 +17,7 @@ function planControl(options) {
     let middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeSeconds / 2, new Cesium.JulianDate());
     this._middleTime = Cesium.defaultValue(options.middleTime, middleTime);
   }
-  this._planManage = new planManage();
+  // this._planManage = new planManage();
 
   this._modelCollection = [];
   this._eventCollection = [];
@@ -40,6 +40,7 @@ planControl.prototype.add = function (event) {
     }
   }
 }
+
 planControl.prototype.addEvent = function (options) {
   this._planManage.add(options);
 }
@@ -48,9 +49,25 @@ planControl.prototype.rePlay = function () {
   this.play();
 }
 
-planControl.prototype.play = function () {
+planControl.prototype.play = function (model) {
   let viewer = this._viewer;
-  viewer.clock.currentTime = this._startTime;
+  if (model) {
+    this.playSingle(model);
+  }
+  viewer.clock.currentTime = this._startTime.clone();
+}
+
+planControl.prototype.playSingle = function (model) {
+  if (model && this._modelCollection.length > 0) {
+    for (let i = 0; i < this._modelCollection.length; i++) {
+      let modelCi = this._modelCollection[i];
+      if (modelCi._model._id === model._id) {
+        modelCi._singleMove = true;
+      } else {
+        modelCi._singleMove = false;
+      }
+    }
+  }
 }
 
 planControl.prototype.pause = function () {
@@ -73,6 +90,7 @@ planControl.prototype.destory = function () {
   this.remove();
   return this.isDestory = true;
 }
+
 planControl.prototype.remove = function () {
   let viewer = this._viewer;
   let modelCollection = this._modelCollection;
@@ -229,11 +247,8 @@ planControl.prototype.fromJSON = function (jsonFile) {
         }
       }
     })
-
-    // that.render();
   }
 }
-
 
 planControl.prototype.export = function () {
   let modelCollectionCopy = [];
