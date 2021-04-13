@@ -73,7 +73,7 @@ export default {
       let position = [-112.11067361278276,36.1088154143215];
       let pos1 = Cesium.Cartesian3.fromDegrees(position[0],position[1],1);
 
-      var heading = Cesium.Math.toRadians(180);
+      var heading = Cesium.Math.toRadians(75);
       var pitch = 0;
       var roll = 0;
       var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
@@ -93,28 +93,28 @@ export default {
         }
       });
 
-      let position1 = [-112.11088361278276,36.1090154143215,0];
-      let pos2 = Cesium.Cartesian3.fromDegrees(position1[0],position1[1],0);
+      // let position1 = [-112.11088361278276,36.1090154143215,0];
+      // let pos2 = Cesium.Cartesian3.fromDegrees(position1[0],position1[1],0);
 
-      var heading = Cesium.Math.toRadians(75);
-      var pitch = 0;
-      var roll = 0;
-      var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
-      var orientation = Cesium.Transforms.headingPitchRollQuaternion(
-        pos2,
-        hpr
-      );
+      // var heading = Cesium.Math.toRadians(0);
+      // var pitch = 0;
+      // var roll = 0;
+      // var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+      // var orientation = Cesium.Transforms.headingPitchRollQuaternion(
+      //   pos2,
+      //   hpr
+      // );
 
-      var entity2 = viewer.entities.add({
-        position: pos2,
-        orientation: orientation,
-        model: {
-          uri: "./static/data/model/GroundVehicle.glb",
-          minimumPixelSize: 128,
-          maximumScale: 1,
-          shadows: false
-        }
-      });
+      // var entity2 = viewer.entities.add({
+      //   position: pos2,
+      //   orientation: orientation,
+      //   model: {
+      //     uri: "./static/data/model/GroundVehicle.glb",
+      //     minimumPixelSize: 128,
+      //     maximumScale: 1,
+      //     shadows: false
+      //   }
+      // });
 
       let p1 = {
         lon: position[0],
@@ -124,26 +124,25 @@ export default {
       let options = {
         viewer: viewer,
         positionOrigin: p1,
-        baseHeading : 180,
-        entityType:EntityMode.air
+        baseHeading : 75,
+        // entityType:EntityMode.air
       };
 
-      let p2 = {
-        lon: position1[0],
-        lat:  position1[1]
-      };
-      let options1 = {
-        viewer: viewer,
-        positionOrigin: p2,
-        baseHeading : 75,
-        entityType:EntityMode.car
-      };
+      // let p2 = {
+      //   lon: position1[0],
+      //   lat:  position1[1]
+      // };
+      // let options1 = {
+      //   viewer: viewer,
+      //   positionOrigin: p2,
+      //   baseHeading : 75,
+      //   entityType:EntityMode.car
+      // };
 
       let areas = new dangerousArea(options);
-      let carArea = new dangerousArea(options1);
 
       areas.addArea();
-      carArea.addArea();
+      areas.addBestArea();
 
       window.entity1 = entity1;
 
@@ -415,8 +414,8 @@ export default {
          */
         let options1 = {
           viewer: window.viewer,
-          // positionOringon: position[position.length - 1],
-          // positionEnd: that.position,
+          positionOringon: position[position.length - 1],
+          positionEnd: that.position,
           startTime: modelEndTime,
           endTime: modelEndTime1
         };
