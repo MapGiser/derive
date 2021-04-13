@@ -435,14 +435,14 @@ PlanEvent.prototype.addWaterEvent = function () {
       that._event.startScale = startScale
       that._event.image = image;
       that._event.startColor = new Cesium.Color(1, 1, 1, 0.6);
-      that._event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4)
+      that._event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4);
       that._event.endScale = endScale;
     } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
       // that._event.emissionRate = 0.001;
       // that._event.show = false;
       that._event.startScale = that._event.endScale = 0.01;
       that._event.image = null;
-      that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+      that._event.startColor = that._event.endColor = new Cesium.Color(0, 0, 0, 0.0);
     }
   }
 
