@@ -15,6 +15,7 @@ function PlanModel(options) {
   this._positions = Cesium.defaultValue(options.position, null);
   this._eventType = 'model';
   this._speed = Cesium.defaultValue(options.speed, 30);//km/h
+  this._singleMove = Cesium.defaultValue(options.singleMove, false);
 
 
   this._startTime = Cesium.defaultValue(options.startTime, null);
@@ -92,36 +93,15 @@ PlanModel.prototype.addModel = function () {
   if (this._model) {
     this._modelGraphic.orientation = this._orientation;
     this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
-      if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-        // if (entity) {
-        //   entity.orientation = that._startOrition;
-        // }
-        let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
-        return position = position ? position : that._positions[0];
-      } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
-        if (entity) {
-          entity.orientation = that._endOrition;
-        }
-        return that._positionAfter.getValue(time, new Cesium.Cartesian3());
+      if (that._singleMove) {
+        that._modelGraphic.orientation = this._startOrition;
+        let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
+        return position;
       } else {
-        if (entity) {
-          entity.orientation = that._orientation;
-        }
-        return that._positionIn.getValue(time, new Cesium.Cartesian3());
-      }
-    }, false);
-    entity = this._modelGraphic;
-  } else if (this._modelPath && !this._model) {
-    var entity = viewer.entities.add({
-      orientation: this._orientation,
-      model: this._modelGraphic,
-      position: new Cesium.CallbackProperty(function (time) {
         if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
           // if (entity) {
           //   entity.orientation = that._startOrition;
           // }
-          // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
-          // return that._positions[0];
           let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
           return position = position ? position : that._positions[0];
         } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
@@ -134,6 +114,39 @@ PlanModel.prototype.addModel = function () {
             entity.orientation = that._orientation;
           }
           return that._positionIn.getValue(time, new Cesium.Cartesian3());
+        }
+      }
+    }, false);
+    entity = this._modelGraphic;
+  } else if (this._modelPath && !this._model) {
+    var entity = viewer.entities.add({
+      orientation: this._orientation,
+      model: this._modelGraphic,
+      position: new Cesium.CallbackProperty(function (time) {
+        if (that._singleMove) {
+          entity.orientation = that._startOrition;
+          let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
+          return position;
+        } else {
+          if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+            // if (entity) {
+            //   entity.orientation = that._startOrition;
+            // }
+            // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
+            // return that._positions[0];
+            let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
+            return position = position ? position : that._positions[0];
+          } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+            if (entity) {
+              entity.orientation = that._endOrition;
+            }
+            return that._positionAfter.getValue(time, new Cesium.Cartesian3());
+          } else {
+            if (entity) {
+              entity.orientation = that._orientation;
+            }
+            return that._positionIn.getValue(time, new Cesium.Cartesian3());
+          }
         }
       }, false)
 
@@ -286,7 +299,7 @@ Object.defineProperties(PlanModel.prototype, {
       }
     }
   },
- 
+
   endTime: {
     get: function () {
       return this._endTime;
