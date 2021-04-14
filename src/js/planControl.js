@@ -23,6 +23,7 @@ function planControl(options) {
   this._eventCollection = [];
   this._pathCollection = [];
   this._voiceCollection = [];
+  this._labelCollection = [];
 }
 
 planControl.prototype.add = function (event) {
@@ -30,6 +31,9 @@ planControl.prototype.add = function (event) {
     if (Cesium.defined(event._eventType) && event._startTime && event._endTime) {
       if (event._eventType === planMode.fire || event._eventType === planMode.fireworks || event._eventType === planMode.water) {
         this._eventCollection.push(event);
+        if(event._label){
+          this._labelCollection.push(event._label);
+        }
       }
     }
     if (event._eventType === 'path') {
@@ -97,19 +101,28 @@ planControl.prototype.remove = function () {
   let eventCollection = this._eventCollection;
   let voiceCollection = this._voiceCollection;
   let pathCollection = this._pathCollection;
+  let labelCollection = this._labelCollection;
 
   modelCollection.forEach(item => {
     let model = item._entityModel;
     if (model) viewer.entities.remove(model);
   })
 
+  labelCollection.forEach(item => {
+    let model = item;
+    if (model) viewer.entities.remove(model);
+    model = null;
+  })
+
   eventCollection.forEach(item => {
     let event = item._event;
     if (event) viewer.scene.primitives.remove(event);
+    event = null;
   })
   pathCollection.forEach(item => {
     let path = item._entityModel;
     if (path) viewer.entities.remove(path);
+    path = null;
   })
   voiceCollection.forEach(item => {
     item.voiceText = null;
