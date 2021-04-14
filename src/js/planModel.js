@@ -98,6 +98,7 @@ PlanModel.prototype.addModel = function () {
         let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
         return position;
       } else {
+        that._modelGraphic.orientation = this._orientation;
         if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
           // if (entity) {
           //   entity.orientation = that._startOrition;
@@ -128,6 +129,7 @@ PlanModel.prototype.addModel = function () {
           let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
           return position;
         } else {
+          entity.orientation = this._orientation;
           if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
             // if (entity) {
             //   entity.orientation = that._startOrition;
@@ -285,6 +287,11 @@ Object.defineProperties(PlanModel.prototype, {
     set: function (value) {
       if (value) {
         this.time0 = this._startTime = value;
+        if (this._positions) {
+          this._totalDistance = this.calcTotalDistance();
+          this._timeMoving = this._totalDistance / (this._speed * 1000 / 3600);
+          this._endTime = Cesium.JulianDate.addSeconds(this._startTime, this._timeMoving, new Cesium.JulianDate());
+        }
 
         this._positionBefore = this.computePathBeforeTime(this._positions);
         //位于时间段内的位置
@@ -318,6 +325,14 @@ Object.defineProperties(PlanModel.prototype, {
         // 用于最后矫正飞机的姿态
         this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
         this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
+
+        this._totalDistance = this.calcTotalDistance();
+        let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime,this._startTime);
+
+        let speed = (this._totalDistance / timeSeconds) * 1000 / 3600;
+
+        this._speed = speed;
+        
       }
     }
   },
