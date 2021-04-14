@@ -219,10 +219,34 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
 
 }
 
+PlanEvent.prototype.addBillBoard = function () {
+  let viewer = this._viewer;
+  let options = {
+    text: '',
+    font: "16px sans-serif",
+    pixelOffset: new Cesium.Cartesian2(3, 3),
+    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+    pixelOffset: new Cesium.Cartesian2(0.0, -50),
+    eyeOffset: new Cesium.Cartesian3(0, 0, -30),
+    heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    fillColor: Cesium.Color.CYAN,
+    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(15.0, 1500.0),
+    showBackground: true
+  }
+  let label = new Cesium.LabelGraphics(options);
+  label = viewer.entities.add({
+    label: label,
+    position: this.positionOringon,
+    show: false
+  })
+  this._label = label
+}
+
 PlanEvent.prototype.addWaterEvent = function () {
   let positionOringon = this._positionOringon.clone();//pos1
   let positionEnd = this._positionEnd.clone();//pos3
   if (!positionOringon || !positionEnd) return;
+  this.addBillBoard();
   let offsetHeight = this._offsetHeight || 3.4;
   let image = this._image || './static/data/img/pq.png';
   let emissionRate = this._emissionRate || 50;
@@ -364,12 +388,19 @@ PlanEvent.prototype.addWaterEvent = function () {
       if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
         that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
         // that._event.image = null;
-
+        if (that._label) {
+          that._label.show = false;
+        }
         // that._event.startScale = that._event.endScale = 0.01;
         // that._event.show = false;
       } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
         // that._event.emissionRate = that._emissionRate;
         // that._event.show = true;
+        if (that._label) {
+          that._label.show = true;
+          that._label.label.text = '开始喷水'
+        }
+
         that._event.startScale = startScale
         that._event.image = image;
         that._event.startColor = new Cesium.Color(1, 1, 1, 0.6);
@@ -380,6 +411,10 @@ PlanEvent.prototype.addWaterEvent = function () {
         // that._event.show = false;
         that._event.startScale = that._event.endScale = 0.01;
         that._event.image = null;
+        if (that._label) {
+          that._label.label.text = '结束喷水';
+          that._label.show = false;
+        }
         // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
       }
     }
