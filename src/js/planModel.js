@@ -92,9 +92,14 @@ PlanModel.prototype.addModel = function () {
   let that = this;
   if (this._model) {
     this._modelGraphic.orientation = this._orientation;
+    // this._modelGraphic.label = 
     this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
       if (that._singleMove) {
         that._modelGraphic.orientation = this._startOrition;
+        if (entity) {
+          entity.label.text = '等待';
+          entity.label.show = true;
+        }
         let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
         return position;
       } else {
@@ -103,15 +108,22 @@ PlanModel.prototype.addModel = function () {
           // if (entity) {
           //   entity.orientation = that._startOrition;
           // }
+          if (entity) {
+            entity.label.text = '等待';
+            entity.label.show = true;
+          }
           let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
           return position = position ? position : that._positions[0];
         } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
           if (entity) {
+            entity.label.text = '运行结束';
             entity.orientation = that._endOrition;
+            entity.label.show = false;
           }
           return that._positionAfter.getValue(time, new Cesium.Cartesian3());
         } else {
           if (entity) {
+            entity.label.text = '前往救援';
             entity.orientation = that._orientation;
           }
           return that._positionIn.getValue(time, new Cesium.Cartesian3());
@@ -119,12 +131,18 @@ PlanModel.prototype.addModel = function () {
       }
     }, false);
     entity = this._modelGraphic;
+    entity.label = this.addBillBoard();
   } else if (this._modelPath && !this._model) {
     var entity = viewer.entities.add({
       orientation: this._orientation,
+      label: this.addBillBoard(),
       model: this._modelGraphic,
       position: new Cesium.CallbackProperty(function (time) {
         if (that._singleMove) {
+          if (entity) {
+            entity.label.text = '等待';
+            entity.label.show = true;
+          }
           entity.orientation = that._startOrition;
           let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
           return position;
@@ -136,15 +154,22 @@ PlanModel.prototype.addModel = function () {
             // }
             // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
             // return that._positions[0];
+            if (entity) {
+              entity.label.text = '等待';
+              entity.label.show = true;
+            }
             let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
             return position = position ? position : that._positions[0];
           } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
             if (entity) {
+              entity.label.text = '运行结束';
               entity.orientation = that._endOrition;
+              entity.label.show = false;
             }
             return that._positionAfter.getValue(time, new Cesium.Cartesian3());
           } else {
             if (entity) {
+              entity.label.text = '前往救援';
               entity.orientation = that._orientation;
             }
             return that._positionIn.getValue(time, new Cesium.Cartesian3());
@@ -157,6 +182,23 @@ PlanModel.prototype.addModel = function () {
   this._entityModel = entity;
   return entity;
 
+}
+
+PlanModel.prototype.addBillBoard = function () {
+  let options = {
+    text: '',
+    font: "16px sans-serif",
+    pixelOffset: new Cesium.Cartesian2(3, 3),
+    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+    pixelOffset: new Cesium.Cartesian2(0.0, -50),
+    eyeOffset: new Cesium.Cartesian3(0, 0, -30),
+    heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+    fillColor: Cesium.Color.CYAN,
+    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(15.0, 1500.0),
+    showBackground: true
+  }
+  let billboard = new Cesium.LabelGraphics(options)
+  return billboard;
 }
 
 PlanModel.prototype.initModel = function (_modelPath) {
@@ -327,12 +369,12 @@ Object.defineProperties(PlanModel.prototype, {
         this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
 
         this._totalDistance = this.calcTotalDistance();
-        let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime,this._startTime);
+        let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
 
         let speed = (this._totalDistance / timeSeconds) * 1000 / 3600;
 
         this._speed = speed;
-        
+
       }
     }
   },
