@@ -31,7 +31,7 @@ planControl.prototype.add = function (event) {
     if (Cesium.defined(event._eventType) && event._startTime && event._endTime) {
       if (event._eventType === planMode.fire || event._eventType === planMode.fireworks || event._eventType === planMode.water) {
         this._eventCollection.push(event);
-        if(event._label){
+        if (event._label) {
           this._labelCollection.push(event._label);
         }
       }
@@ -263,7 +263,7 @@ planControl.prototype.fromJSON = function (jsonFile) {
   }
 }
 
-planControl.prototype.export = function () {
+planControl.prototype.toJSON = function () {
   let modelCollectionCopy = [];
   let eventCollectionCopy = [];
   let voiceCollectionCopy = [];
@@ -415,7 +415,6 @@ planControl.prototype.export = function () {
     voiceCollectionCopy.push(obj);
   })
 
-
   let exportText = {
     modelCollection: modelCollectionCopy,
     eventCollection: eventCollectionCopy,
@@ -424,7 +423,13 @@ planControl.prototype.export = function () {
   }
 
   exportText = JSON.stringify(exportText);
+  return exportText;
+}
 
+planControl.prototype.export = function () {
+
+  let exportText = this.toJSON();
+  
   save(exportText);
   // 另存为html文件
   function save(text) {
