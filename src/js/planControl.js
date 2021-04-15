@@ -24,6 +24,7 @@ function planControl(options) {
   this._pathCollection = [];
   this._voiceCollection = [];
   this._labelCollection = [];
+  this._bestAreas = [];
 }
 
 planControl.prototype.add = function (event) {
@@ -41,6 +42,16 @@ planControl.prototype.add = function (event) {
     }
     if (event._modelGraphic && event._startTime && event._endTime) {
       this._modelCollection.push(event);
+    }
+    if (event._eventType === 'dangerousArea') {
+      if (event._areaEntity) {
+        this._bestAreas.push(event._areaEntity);
+      }
+      if (event._bestEntities) {
+        event._bestEntities.forEach(item => {
+          this._bestAreas.push(item);
+        })
+      }
     }
   }
 }
@@ -102,6 +113,7 @@ planControl.prototype.remove = function () {
   let voiceCollection = this._voiceCollection;
   let pathCollection = this._pathCollection;
   let labelCollection = this._labelCollection;
+  let bestAreas = this._bestAreas;
 
   modelCollection.forEach(item => {
     let model = item._entityModel;
@@ -109,6 +121,12 @@ planControl.prototype.remove = function () {
   })
 
   labelCollection.forEach(item => {
+    let model = item;
+    if (model) viewer.entities.remove(model);
+    model = null;
+  })
+
+  bestAreas.forEach(item => {
     let model = item;
     if (model) viewer.entities.remove(model);
     model = null;
@@ -429,7 +447,7 @@ planControl.prototype.toJSON = function () {
 planControl.prototype.export = function () {
 
   let exportText = this.toJSON();
-  
+
   save(exportText);
   // 另存为html文件
   function save(text) {
