@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-04-12 16:06:34
- * @LastEditTime: 2021-04-14 00:57:03
+ * @LastEditTime: 2021-04-14 14:23:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \derive\src\js\dangerousAirArea.js
@@ -62,6 +62,7 @@ function DangerousAirArea(options) {
   this._outlineColor = Cesium.defaultValue(options.outlineColor, Cesium.Color.AQUA);
   this._baseHeading = Cesium.defaultValue(options.baseHeading, 0);
   this._entityType = Cesium.defaultValue(options.entityType, EntityMode.air);
+  this._eventType = 'dangerousArea';
 
   // if(this._entityType === EntityMode.air){
   //   this.camputerParam = Cesium.defaultValue(options.calcParam, calcAirParam);
