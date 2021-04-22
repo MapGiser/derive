@@ -1,5 +1,6 @@
 import Complex from './com.js';
 import planMode from './planMode.js';
+import planManage from './planManage.js';
 function PlanEvent(options) {
   if (!options.viewer) {
     console.error('viewer is required!')
@@ -83,33 +84,33 @@ PlanEvent.prototype.addFireEvent = function () {
   let that = this;
 
   function applyGravity(particle, dt) {
-    var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
-    var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
-    if (particle && that._event) {
-      let time = that._viewer.clock.currentTime;
-      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        that._event.startScale = that._event.endScale = 0.01;
-        that._event.image = that._image;
-        // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
-      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
-        // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-        // that._event.image = that._image;
-        // that._event.startScale = that._event.endScale = 1.0;
-      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
-        that._event.emissionRate = that._emissionRate || 180;
-        that._event.startScale = startScale;
-        that._event.image = that._image;
-        that._event.endScale = endScale;
-      } else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        that._event.startScale = startScale;
-        that._event.image = that._image;
-        that._event.endScale = endScale;
+    // var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
+    // var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
+    // if (particle && that._event) {
+    //   let time = that._viewer.clock.currentTime;
+    //   if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+    //     that._event.startScale = that._event.endScale = 0.01;
+    //     that._event.image = that._image;
+    //     // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+    //   } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+    //     // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+    //     // that._event.image = that._image;
+    //     // that._event.startScale = that._event.endScale = 1.0;
+    //   } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
+    //     that._event.emissionRate = that._emissionRate || 180;
+    //     that._event.startScale = startScale;
+    //     that._event.image = that._image;
+    //     that._event.endScale = endScale;
+    //   } else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+    //     that._event.startScale = startScale;
+    //     that._event.image = that._image;
+    //     that._event.endScale = endScale;
 
-        let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
-        if (emissionRate < 0.1) emissionRate = 0.01;
-        that._event.emissionRate = emissionRate * that._emissionRate;
-      }
-    }
+    //     let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
+    //     if (emissionRate < 0.1) emissionRate = 0.01;
+    //     that._event.emissionRate = emissionRate * that._emissionRate;
+    //   }
+    // }
   }
   if (position) {
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
@@ -157,34 +158,34 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
 
   let that = this;
   function applyGravity(particle, dt) {
-    var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
-    var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
-    if (particle) {
-      let time = that._viewer.clock.currentTime;
-      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        that._event.startScale = that._event.endScale = 0.01;
-        // that._event.image = that._image;
-        // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
-      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
-        // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-        // that._event.image = null;
-        // that._event.startScale = that._event.endScale = 0.01;
-      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        // that._event.emissionRate = that._emissionRate || 180;
-        that._event.startScale = startScale;
-        // that._event.image = that._image;
-        that._event.endScale = endScale;
-      }
-      else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        // that._event.startScale = startScale;
-        // that._event.image = that._image;
-        // that._event.endScale = endScale;
+    // var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
+    // var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
+    // if (particle) {
+    //   let time = that._viewer.clock.currentTime;
+    //   if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+    //     that._event.startScale = that._event.endScale = 0.01;
+    //     // that._event.image = that._image;
+    //     // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+    //   } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+    //     // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+    //     // that._event.image = null;
+    //     // that._event.startScale = that._event.endScale = 0.01;
+    //   } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+    //     // that._event.emissionRate = that._emissionRate || 180;
+    //     that._event.startScale = startScale;
+    //     // that._event.image = that._image;
+    //     that._event.endScale = endScale;
+    //   }
+    //   else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+    //     // that._event.startScale = startScale;
+    //     // that._event.image = that._image;
+    //     // that._event.endScale = endScale;
 
-        // let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
-        // if (emissionRate < 0.1) emissionRate = 0.01;
-        // that._event.emissionRate = emissionRate * that._emissionRate;
-      }
-    }
+    //     // let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
+    //     // if (emissionRate < 0.1) emissionRate = 0.01;
+    //     // that._event.emissionRate = emissionRate * that._emissionRate;
+    //   }
+    // }
   }
 
   if (position) {
@@ -213,7 +214,7 @@ PlanEvent.prototype.addFfireWorksEvent = function (options) {
       emitter: new Cesium.CircleEmitter(1.0),
       sizeInMeters: true,
       emitterModelMatrix: computeEmitterModelMatrix(),
-      updateCallback: this._updateCallback || applyGravity,
+      // updateCallback: this._updateCallback || applyGravity,
     })
   }
 
@@ -249,7 +250,7 @@ PlanEvent.prototype.addWaterEvent = function () {
   this.addBillBoard();
   let offsetHeight = this._offsetHeight || 3.4;
   let image = this._image || './static/data/img/pq.png';
-  let emissionRate = this._emissionRate || 50;
+  let emissionRate = 120// || 50;
   let startScale = this._startScale || 1;
   let endScale = this._endScale || 1;
   let gravity = -1;
@@ -269,7 +270,7 @@ PlanEvent.prototype.addWaterEvent = function () {
     startScale = 0.6;
     endScale = 0.5;
     minimumParticleLife = maximumParticleLife = 15.0;
-    emissionRate = 20.0;
+    // emissionRate = 20.0;
   } else if (distance < 20) {
     speedMin = 3.0;
     speedMax = 4.0;
@@ -376,6 +377,7 @@ PlanEvent.prototype.addWaterEvent = function () {
     return Cesium.Matrix4.fromTranslationRotationScale(trs, emitterModelMatrix);
   }
   var that = this;
+  let viewer = this._viewer;
   let clock = this._viewer.clock;
   //设置重力
   function applyGravitys(particle, dt) {
@@ -383,52 +385,53 @@ PlanEvent.prototype.addWaterEvent = function () {
     Cesium.Cartesian3.normalize(position, gravityScratch);
     Cesium.Cartesian3.multiplyByScalar(gravityScratch, gravity * dt, gravityScratch);
     particle.velocity = Cesium.Cartesian3.add(particle.velocity, gravityScratch, particle.velocity);
-    if (particle && that._event) {
-      let time = clock.currentTime;
-      if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
-        that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
-        // that._event.image = null;
-        if (that._label) {
-          that._label.show = false;
-        }
-        // that._event.startScale = that._event.endScale = 0.01;
-        // that._event.show = false;
-      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        // that._event.emissionRate = that._emissionRate;
-        // that._event.show = true;
-        if (that._label) {
-          that._label.show = true;
-          that._label.label.text = '开始喷水'
-        }
 
-        that._event.startScale = startScale
-        that._event.image = image;
-        that._event.startColor = new Cesium.Color(1, 1, 1, 0.6);
-        that._event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4);
-        that._event.endScale = endScale;
-      } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        // that._event.emissionRate = 0.001;
-        // that._event.show = false;
-        that._event.startScale = that._event.endScale = 0.01;
-        that._event.image = null;
-        if (that._label) {
-          that._label.label.text = '结束喷水';
-          that._label.show = false;
-        }
-        // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
-      }
-    }
+    // if (particle && that._event) {
+    //   let time = clock.currentTime;
+    //   if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
+    //     // that._event.startColor = new Cesium.Color(0, 0, 0, 0.0);
+    //     // that._event.image = null;
+    //     // if (that._label) {
+    //     //   that._label.show = false;
+    //     // }
+    //     // that._event.startScale = that._event.endScale = 0.01;
+    //     // that._event.show = false;
+    //   } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+    //     // that._event.emissionRate = that._emissionRate;
+    //     // that._event.show = true;
+    //     // if (that._label) {
+    //     //   that._label.show = true;
+    //     //   that._label.label.text = '开始喷水'
+    //     // }
+
+    //     // that._event.startScale = startScale
+    //     // that._event.image = image;
+    //     // that._event.startColor = new Cesium.Color(1, 1, 1, 0.6);
+    //     // that._event.endColor = new Cesium.Color(0.80, 0.86, 1, 0.4);
+    //     // that._event.endScale = endScale;
+    //   } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+    //     // that._event.emissionRate = 0.001;
+    //     // that._event.show = false;
+    //     // that._event.startScale = that._event.endScale = 0.01;
+    //     // that._event.image = null;
+    //     // if (that._label) {
+    //     //   that._label.label.text = '结束喷水';
+    //     //   that._label.show = false;
+    //     // }
+    //     // that._event.startColor = that._event.endColornew = new Cesium.Color(0, 0, 0, 0.0);
+    //   }
+    // }
+    // })
   }
-
 
   //添加粒子
   let event = new Cesium.ParticleSystem({
     image: image,
     startColor: new Cesium.Color(1, 1, 1, 0.6),
     endColor: new Cesium.Color(0.80, 0.86, 1, 0.4),
-    startScale: 0.01,
-    endScale: 0.01,
-    show: true,
+    startScale: startScale,//0.01,
+    endScale: endScale,//0.01,
+    show: false,
     minimumParticleLife: minimumParticleLife,
     lifetime: minimumParticleLife + maximumParticleLife,
     maximumParticleLife: maximumParticleLife,
@@ -445,9 +448,85 @@ PlanEvent.prototype.addWaterEvent = function () {
     // sizeInMeters: this._sizeInMeters || true,
     // loop: true
   })
-
   return event;
+}
 
+PlanEvent.prototype.play = function () {
+  let viewer = this._viewer;
+  let clock = viewer.clock;
+  let that = this;
+  var showWaterParticle = function () {
+    let time = clock.currentTime;
+    if (that._event) {
+      if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
+        if (that._label) {
+          that._label.show = false;
+        }
+        that._event.show = false;
+      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        if (that._label) {
+          that._label.show = true;
+          that._label.label.text = '开始喷水'
+        }
+        that._event.show = true;
+      } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+        if (that._label) {
+          that._label.label.text = '结束喷水';
+          that._label.show = false;
+        }
+        that._event.show = false;
+        that._event.twzdEvent = undefined;
+      }
+    }
+  }
+
+  var showFireParticle = function () {
+    var times = Cesium.JulianDate.secondsDifference(that._endTime, that._startTime);
+    var middleTime = Cesium.JulianDate.addSeconds(that._startTime, times / 2, new Cesium.JulianDate());
+    if (that._event) {
+      let time = clock.currentTime;
+      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+        that._event.show = false;
+        that._event.twzdEvent = undefined
+      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+        that._event.show = true;
+      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, middleTime)) {
+        that._event.emissionRate = that._emissionRate || 180;
+        that._event.show = true;
+      } else if (Cesium.JulianDate.greaterThan(time, middleTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        let emissionRate = ((that._endTime.secondsOfDay - time.secondsOfDay) / (that._endTime.secondsOfDay - middleTime.secondsOfDay))
+        if (emissionRate < 0.1) emissionRate = 0.01;
+        that._event.emissionRate = emissionRate * that._emissionRate;
+      }
+    }
+  }
+
+  var showFireWorksParticle = function(){
+    if (that._event) {
+      let time = clock.currentTime;
+      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+        that._event.show = false
+        that._event.twzdEvent = undefined
+      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+        that._event.show = true
+      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+        that._event.show = true
+      }
+    }
+  }
+
+
+
+  if (this._event) {
+    if (this._eventType === 2) {
+      this._event.twzdEvent = showWaterParticle;
+    } else if (this._eventType === 0) {
+      this._event.twzdEvent = showFireParticle;
+    }else if(this._eventType ===1){
+      this._event.twzdEvent = showFireWorksParticle;
+    }
+
+  }
 }
 
 PlanEvent.prototype.addExplodeEvent = function (options) {
