@@ -70,6 +70,7 @@ planControl.prototype.play = function (model) {
     this.playSingle(model);
   }
   viewer.clock.currentTime = this._startTime.clone();
+  this.show();
 }
 
 planControl.prototype.playSingle = function (model) {
@@ -178,7 +179,7 @@ planControl.prototype.fromJSON = function (jsonFile) {
             let lines = [];
             if (position) {
               for (let i = 0; i < position.length; i += 3) {
-                let p0 = position[i + 0];
+                let p0 = position[i + 0]; 
                 let p1 = position[i + 1];
                 let p2 = position[i + 2];
                 let p = new Cesium.Cartesian3(p0, p1, p2);
@@ -442,6 +443,19 @@ planControl.prototype.toJSON = function () {
 
   exportText = JSON.stringify(exportText);
   return exportText;
+}
+
+planControl.prototype.show = function () {
+  let eventCollection = this._eventCollection;
+  eventCollection.forEach(item => {
+    let eventType = item._eventType;
+    if (eventType === planMode.fire || eventType === planMode.fireworks || eventType === planMode.water) {
+      if(item.play){
+        item.play();
+      }
+    }
+  })
+
 }
 
 planControl.prototype.export = function () {
