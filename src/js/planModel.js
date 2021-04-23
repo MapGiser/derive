@@ -10,12 +10,15 @@ function PlanModel(options) {
   this._minimumPixelSize = Cesium.defaultValue(options.minimumPixelSize, 1);
   this._maximumScale = Cesium.defaultValue(options.maximumScale, 1);
   this._modelGraphic = Cesium.defaultValue(options.modelGraphic, null);
-  this._name = Cesium.defaultValue(options.name, 'PlanManagement');
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
   this._eventType = 'model';
   this._speed = Cesium.defaultValue(options.speed, 30);//km/h
   this._singleMove = Cesium.defaultValue(options.singleMove, false);
+  // 模型id,用于标识模型
+  this._modelId = Cesium.defaultValue(options.modelId, null);
+  this._name = Cesium.defaultValue(options.name, null);
+  this._modelType = Cesium.defaultValue(options.modelType, null);
 
 
   this._startTime = Cesium.defaultValue(options.startTime, null);
@@ -26,19 +29,19 @@ function PlanModel(options) {
   this._maxTime = Cesium.Iso8601.MAXIMUM_VALUE;
 
   //根据速度计算运动时间
-  if (this._positions) {
+  if (this._positions && this._startTime) {
     this._totalDistance = this.calcTotalDistance();
     this._timeMoving = this._totalDistance / (this._speed * 1000 / 3600);
     this._endTime = Cesium.JulianDate.addSeconds(this._startTime, this._timeMoving, new Cesium.JulianDate());
   }
 
-  if (!this._middleTime) {
+  if (!this._middleTime && this._startTime && this._endTime) {
     var timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
     var middleTime = Cesium.JulianDate.addSeconds(this._startTime, timeSeconds / 2, new Cesium.JulianDate());
     this._middleTime = middleTime;
+    this._time = Cesium.defaultValue({ start: this._startTime, middle: this._middleTime, end: this._endTime }, null);
   }
 
-  this._time = Cesium.defaultValue({ start: this._startTime, middle: this._middleTime, end: this._endTime }, null);
 }
 
 PlanModel.prototype.init = function () {
@@ -131,11 +134,11 @@ PlanModel.prototype.addModel = function () {
       }
     }, false);
     entity = this._modelGraphic;
-    entity.label = this.addBillBoard();
+    entity.label = (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard();
   } else if (this._modelPath && !this._model) {
     var entity = viewer.entities.add({
       orientation: this._orientation,
-      label: this.addBillBoard(),
+      label: (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard(),
       model: this._modelGraphic,
       position: new Cesium.CallbackProperty(function (time) {
         if (that._singleMove) {
@@ -302,6 +305,30 @@ PlanModel.prototype.hide = function () {
 
 
 Object.defineProperties(PlanModel.prototype, {
+  modelId: {
+    get: function () {
+      return this._modelId
+    },
+    set: function (value) {
+      this._modelId = value
+    }
+  },
+  name: {
+    get: function () {
+      return this._name;
+    },
+    set: function (value) {
+      this._name = value
+    }
+  },
+  modelType: {
+    get: function () {
+      return this._modelType
+    },
+    set: function (value) {
+      this._modelPath = value
+    }
+  },
   modelPath: {
     get: function () {
       return this._modelPath;
@@ -310,6 +337,14 @@ Object.defineProperties(PlanModel.prototype, {
       if (value) {
         this._modelPath = value;
       }
+    }
+  },
+  singleMove: {
+    get: function () {
+      return this._singleMove
+    },
+    set: function (value) {
+      this._singleMove = value;
     }
   },
   modelGraphic: {
@@ -371,7 +406,7 @@ Object.defineProperties(PlanModel.prototype, {
         this._totalDistance = this.calcTotalDistance();
         let timeSeconds = Cesium.JulianDate.secondsDifference(this._endTime, this._startTime);
 
-        let speed = (this._totalDistance / timeSeconds) * 1000 / 3600;
+        let speed = (this._totalDistance / timeSeconds) * 3600 / 1000;
 
         this._speed = speed;
 

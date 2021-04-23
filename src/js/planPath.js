@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-03-31 10:34:28
- * @LastEditTime: 2021-04-06 16:05:11
+ * @LastEditTime: 2021-04-22 21:40:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \derive\src\js\planPath.js
@@ -16,6 +16,7 @@ function PlanPath(options) {
   this._eventType = 'path';
   this._show = Cesium.defaultValue(options.show, true);
   this._positions = Cesium.defaultValue(options.position, null);
+  this._modelId = Cesium.defaultValue(options.modelId, null);
 
 }
 
@@ -60,6 +61,14 @@ PlanPath.prototype.hide = function () {
 }
 
 Object.defineProperties(PlanPath, {
+  modelId:{
+    get:function(){
+      return this._modelId
+    },
+    set:function(value){
+      this._modelId = value
+    }
+  },
   show: {
     get: function () {
       return this._show;

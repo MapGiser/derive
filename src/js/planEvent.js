@@ -16,6 +16,9 @@ function PlanEvent(options) {
   this._event = Cesium.defaultValue(options.event, null);
   this._fireWorksBearAngle = Cesium.defaultValue(options.fireWorksBearAngle, 0.0);
   this._fireWorksLevelAngle = Cesium.defaultValue(options.fireWorksLevelAngle, 0.0);
+  this._singleMove = false;
+
+  this._modelId = Cesium.defaultValue(options.modelId,null);
 
   this._minimumTime = Cesium.Iso8601.MINIMUM_VALUE;
 
@@ -116,8 +119,8 @@ PlanEvent.prototype.addFireEvent = function () {
     let modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
     return new Cesium.ParticleSystem({
       modelMatrix: modelMatrix,
-      speed: this._speed || 15,
-      lifetime: 500,
+      speed: this._speed || 10,
+      lifetime: 10,
       particleLife: 0.5,
       show: true,
       startScale: 1,
@@ -458,25 +461,30 @@ PlanEvent.prototype.play = function () {
   var showWaterParticle = function () {
     let time = clock.currentTime;
     if (that._event) {
-      if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
-        if (that._label) {
-          that._label.show = false;
-        }
+      if (that._singleMove) {
         that._event.show = false;
-      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        if (that._label) {
-          that._label.show = true;
-          that._label.label.text = '开始喷水'
+      } else {
+        if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minimumTime)) {
+          if (that._label) {
+            that._label.show = false;
+          }
+          that._event.show = false;
+        } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+          if (that._label) {
+            that._label.show = true;
+            that._label.label.text = '开始喷水'
+          }
+          that._event.show = true;
+        } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+          if (that._label) {
+            that._label.label.text = '结束喷水';
+            that._label.show = false;
+          }
+          that._event.show = false;
+          that._event.twzdEvent = undefined;
         }
-        that._event.show = true;
-      } else if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        if (that._label) {
-          that._label.label.text = '结束喷水';
-          that._label.show = false;
-        }
-        that._event.show = false;
-        that._event.twzdEvent = undefined;
       }
+
     }
   }
 
@@ -501,16 +509,20 @@ PlanEvent.prototype.play = function () {
     }
   }
 
-  var showFireWorksParticle = function(){
+  var showFireWorksParticle = function () {
     if (that._event) {
-      let time = clock.currentTime;
-      if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
-        that._event.show = false
-        that._event.twzdEvent = undefined
-      } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
-        that._event.show = true
-      } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
-        that._event.show = true
+      if (that._singleMove) {
+        that._event.show = false;
+      } else {
+        let time = clock.currentTime;
+        if (Cesium.JulianDate.greaterThan(time, that._endTime)) {
+          that._event.show = false
+          that._event.twzdEvent = undefined
+        } else if (Cesium.JulianDate.lessThan(time, that._startTime)) {
+          that._event.show = true
+        } else if (Cesium.JulianDate.greaterThan(time, that._startTime) && Cesium.JulianDate.lessThan(time, that._endTime)) {
+          that._event.show = true
+        }
       }
     }
   }
@@ -522,7 +534,7 @@ PlanEvent.prototype.play = function () {
       this._event.twzdEvent = showWaterParticle;
     } else if (this._eventType === 0) {
       this._event.twzdEvent = showFireParticle;
-    }else if(this._eventType ===1){
+    } else if (this._eventType === 1) {
       this._event.twzdEvent = showFireWorksParticle;
     }
 
@@ -594,6 +606,22 @@ PlanEvent.prototype.addExplodeEvent = function (options) {
 
 
 Object.defineProperties(PlanEvent.prototype, {
+  modelId:{
+    get:function(){
+      return this._modelId
+    },
+    set:function(value){
+      this._modelId = value
+    }
+  },
+  singleMove:{
+    get:function(){
+      return this._singleMove;
+    },
+    set:function(value){
+      this._singleMove = value;
+    }
+  },
   positionOringon: {
     get: function () {
       return this._positionOringon;
