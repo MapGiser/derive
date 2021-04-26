@@ -20,6 +20,10 @@ function PlanModel(options) {
   this._name = Cesium.defaultValue(options.name, null);
   this._modelType = Cesium.defaultValue(options.modelType, null);
 
+  this._heading = Cesium.defaultValue(options.heading,0);
+  this._pitch = Cesium.defaultValue(options.pitch,0);
+  this._roll = Cesium.defaultValue(options.roll,0);
+
 
   this._startTime = Cesium.defaultValue(options.startTime, null);
   this._middleTime = Cesium.defaultValue(options.middleTime, null);
@@ -90,73 +94,33 @@ PlanModel.prototype.addModel = function () {
     // 用于最后矫正飞机的姿态
     this._startOrition = this._orientation.getValue(this._orientationStartTime, new Cesium.Quaternion());
     this._endOrition = this._orientation.getValue(this._orientationEndTime, new Cesium.Quaternion());
+  } else if(this._positions && Cesium.defined(this._heading)&&Cesium.defined(this._pitch)){
+    let heading = Cesium.Math.toRadians(this._heading);
+    let pitch = Cesium.Math.toRadians(this._pitch);
+    let roll = Cesium.Math.toRadians(this._roll);
+    var hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+    this._orientation = Cesium.Transforms.headingPitchRollQuaternion(this._positions,hpr);
   }
   var entity;
   let that = this;
   if (this._model) {
-    this._modelGraphic.orientation = this._orientation;
-    // this._modelGraphic.label = 
-    this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
-      if (that._singleMove) {
-        that._modelGraphic.orientation = this._startOrition;
-        if (entity) {
-          entity.label.text = '等待';
-          entity.label.show = true;
-        }
-        let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
-        return position;
-      } else {
-        that._modelGraphic.orientation = this._orientation;
-        if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
-          // if (entity) {
-          //   entity.orientation = that._startOrition;
-          // }
-          if (entity) {
-            entity.label.text = '等待';
-            entity.label.show = true;
-          }
-          let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
-          return position = position ? position : that._positions[0];
-        } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
-          if (entity) {
-            entity.label.text = '运行结束';
-            entity.orientation = that._endOrition;
-            entity.label.show = false;
-          }
-          return that._positionAfter.getValue(time, new Cesium.Cartesian3());
-        } else {
-          if (entity) {
-            entity.label.text = '前往救援';
-            entity.orientation = that._orientation;
-          }
-          return that._positionIn.getValue(time, new Cesium.Cartesian3());
-        }
-      }
-    }, false);
-    entity = this._modelGraphic;
-    entity.label = (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard();
-  } else if (this._modelPath && !this._model) {
-    var entity = viewer.entities.add({
-      orientation: this._orientation,
-      label: (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard(),
-      model: this._modelGraphic,
-      position: new Cesium.CallbackProperty(function (time) {
+    if(this._startTime && this._endTime){
+      this._modelGraphic.orientation = this._orientation;
+      this._modelGraphic.position = new Cesium.CallbackProperty(function (time) {
         if (that._singleMove) {
+          that._modelGraphic.orientation = this._startOrition;
           if (entity) {
             entity.label.text = '等待';
             entity.label.show = true;
           }
-          entity.orientation = that._startOrition;
           let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
           return position;
         } else {
-          entity.orientation = this._orientation;
+          that._modelGraphic.orientation = this._orientation;
           if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
             // if (entity) {
             //   entity.orientation = that._startOrition;
             // }
-            // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
-            // return that._positions[0];
             if (entity) {
               entity.label.text = '等待';
               entity.label.show = true;
@@ -178,9 +142,60 @@ PlanModel.prototype.addModel = function () {
             return that._positionIn.getValue(time, new Cesium.Cartesian3());
           }
         }
-      }, false)
+      }, false);
+    }else {
+      this._modelGraphic.orientation = this._orientation;
+    }
+    entity = this._modelGraphic;
+    entity.label = (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard();
+  } else if (this._modelPath && !this._model) {
+    if(this._startTime && this._endTime){
+      var entity = viewer.entities.add({
+        orientation: this._orientation,
+        label: (this._eventType === 0 || this._eventType === 1) ? undefined : this.addBillBoard(),
+        model: this._modelGraphic,
+        position: new Cesium.CallbackProperty(function (time) {
+          if (that._singleMove) {
+            if (entity) {
+              entity.label.text = '等待';
+              entity.label.show = true;
+            }
+            entity.orientation = that._startOrition;
+            let position = that._positionIn.getValue(that._startTime, new Cesium.Cartesian3());
+            return position;
+          } else {
+            entity.orientation = this._orientation;
+            if (Cesium.JulianDate.lessThan(time, that._startTime) && Cesium.JulianDate.greaterThan(time, that._minTime)) {
+              // if (entity) {
+              //   entity.orientation = that._startOrition;
+              // }
+              // return that._positionBefore.getValue(time, new Cesium.Cartesian3());
+              // return that._positions[0];
+              if (entity) {
+                entity.label.text = '等待';
+                entity.label.show = true;
+              }
+              let position = that._positionBefore.getValue(time, new Cesium.Cartesian3());
+              return position = position ? position : that._positions[0];
+            } else if (Cesium.JulianDate.greaterThan(time, that._endTime) && Cesium.JulianDate.lessThan(time, that._maxTime)) {
+              if (entity) {
+                entity.label.text = '运行结束';
+                entity.orientation = that._endOrition;
+                entity.label.show = false;
+              }
+              return that._positionAfter.getValue(time, new Cesium.Cartesian3());
+            } else {
+              if (entity) {
+                entity.label.text = '前往救援';
+                entity.orientation = that._orientation;
+              }
+              return that._positionIn.getValue(time, new Cesium.Cartesian3());
+            }
+          }
+        }, false)
 
-    });
+      });
+    }
   }
   this._entityModel = entity;
   return entity;
