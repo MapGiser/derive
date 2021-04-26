@@ -149,31 +149,82 @@ planControl.prototype.removeSingle = function (model) {
       if (item._modelId === id) {
         if (item._entityModel) {
           viewer.entities.remove(item._entityModel);
-          this._modelCollection.slice(index, 1);
+          this._modelCollection.splice(index, 1);
           item = null;
         }
       }
     })
-    this._eventCollection.forEach((item, index) => {
+
+    for (let i = 0; i < this._eventCollection.length; i++) {
+      let item = this._eventCollection[i];
       if (item._modelId === id) {
         if (item._event) {
           viewer.scene.primitives.remove(item._event);
-          this._eventCollection.slice(index, 1);
+          this._eventCollection.splice(index, 1);
           item = null;
         }
       }
-    })
+    }
     this._pathCollection.forEach((item, index) => {
       if (item._modelId === id) {
         if (item._entityModel) {
           viewer.entities.remove(item._entityModel);
-          this._pathCollection.slice(index, 1);
+          this._pathCollection.splice(index, 1);
           item = null;
         }
       }
     })
   }
 }
+
+planControl.prototype.removeEvent = function (event) {
+  let viewer = this._viewer;
+  if (event) {
+    let id = event._modelId;
+    this._eventCollection.forEach((item, index) => {
+      if (item._modelId === id) {
+        if (item._event) {
+          viewer.primitives.remove(item._event);
+          this._eventCollection.splice(index, 1);
+          item = null;
+        }
+      }
+    })
+  }
+}
+
+planControl.prototype.removeModel = function (model) {
+  let viewer = this._viewer;
+  if (model) {
+    let id = model._modelId;
+    this._modelCollection.forEach((item, index) => {
+      if (item._modelId === id) {
+        if (item._entityModel) {
+          viewer.entities.remove(item._entityModel);
+          this._modelCollection.splice(index, 1);
+          item = null;
+        }
+      }
+    })
+  }
+}
+
+planControl.prototype.removePath = function (path) {
+  let viewer = this._viewer;
+  if (path) {
+    let id = path._modelId;
+    this._pathCollection.forEach((item, index) => {
+      if (item._modelId === id) {
+        if (item._entityModel) {
+          viewer.entities.remove(item._entityModel);
+          this._pathCollection.splice(index, 1);
+          item = null;
+        }
+      }
+    })
+  }
+}
+
 
 planControl.prototype.remove = function () {
   let viewer = this._viewer;
@@ -242,6 +293,8 @@ planControl.prototype.fromJSON = function (jsonFile) {
             let modelId = item.modelId;
             let modelType = item.modelType;
             let singleMove = item._singleMove;
+            let heading = item_heading;
+            let pitch = item._pitch;
             if (startTime) {
               startTime = new Cesium.JulianDate.fromDate(new Date(startTime), new Cesium.JulianDate());
             }
@@ -267,7 +320,9 @@ planControl.prototype.fromJSON = function (jsonFile) {
               speed: speed,
               modelId: modelId,
               modelType: modelType,
-              singleMove: singleMove
+              singleMove: singleMove,
+              heading: heading,
+              pitch: pitch
             }
 
             let planModel = new PlanModel(obj);
@@ -361,6 +416,150 @@ planControl.prototype.fromJSON = function (jsonFile) {
   }
 }
 
+planControl.prototype.fromJSONString = function (jsonString) {
+  let that = this;
+  if (jsonString) {
+    this._modelCollection.length = this._eventCollection.length = this._voiceCollection.length = this._pathCollection.length = 0;
+
+    if (val) {
+      let modelCollection = val.modelCollection.concat();
+      let eventCollection = val.eventCollection.concat();
+      let pathCollection = val.pathCollection.concat();
+      let voiceCollection = val.voiceCollection.concat();
+      let p;
+      if (modelCollection) {
+        modelCollection.forEach(item => {
+          let startTime = item.startTime;
+          let endTime = item.endTime;
+          let modelPath = item.modelPath;
+          let position = item.position;
+          let speed = item.speed;
+          let modelId = item.modelId;
+          let modelType = item.modelType;
+          let singleMove = item._singleMove;
+          let heading = item_heading;
+          let pitch = item._pitch;
+          if (startTime) {
+            startTime = new Cesium.JulianDate.fromDate(new Date(startTime), new Cesium.JulianDate());
+          }
+          if (endTime) {
+            endTime = new Cesium.JulianDate.fromDate(new Date(endTime), new Cesium.JulianDate());
+          }
+          let lines = [];
+          if (position) {
+            for (let i = 0; i < position.length; i += 3) {
+              let p0 = position[i + 0];
+              let p1 = position[i + 1];
+              let p2 = position[i + 2];
+              let p = new Cesium.Cartesian3(p0, p1, p2);
+              lines.push(p);
+            }
+          }
+          let obj = {
+            viewer: that._viewer,
+            startTime: startTime,
+            endTime: endTime,
+            position: lines,
+            modelPath: modelPath,
+            speed: speed,
+            modelId: modelId,
+            modelType: modelType,
+            singleMove: singleMove,
+            heading: heading,
+            pitch: pitch
+          }
+
+          let planModel = new PlanModel(obj);
+          planModel.addModel();
+          that.add(planModel);
+        })
+      }
+
+      if (eventCollection) {
+        eventCollection.forEach(item => {
+          let startTime = item.startTime;
+          let endTime = item.endTime;
+          let eventType = item.eventType;
+          let position = item.position;
+          let positionOringon = item.positionOringon;
+          let positionEnd = item.positionEnd;
+          let fireWorksBearAngle = item.fireWorksBearAngle;
+          let fireWorksLevelAngle = item.fireWorksLevelAngle;
+          let modelId = item.modelId;
+          if (startTime) {
+            startTime = new Cesium.JulianDate.fromDate(new Date(startTime), new Cesium.JulianDate());
+          }
+          if (endTime) {
+            endTime = new Cesium.JulianDate.fromDate(new Date(endTime), new Cesium.JulianDate());
+          }
+          let lines = [];
+          if (position && position.length > 3) {
+            for (let i = 0; i < position.length; i += 3) {
+              let p0 = position[i + 0];
+              let p1 = position[i + 1];
+              let p2 = position[i + 2];
+              let p = new Cesium.Cartesian3(p0, p1, p2);
+              lines.push(p);
+            }
+          } else {
+            p = new Cesium.Cartesian3(position[0], position[1], position[2]);
+          }
+
+          if (positionOringon) {
+            positionOringon = new Cesium.Cartesian3(positionOringon[0], positionOringon[1], positionOringon[2]);
+          }
+          if (positionEnd) {
+            positionEnd = new Cesium.Cartesian3(positionEnd[0], positionEnd[1], positionEnd[2]);
+          }
+          let obj = {
+            viewer: that._viewer,
+            startTime: startTime,
+            endTime: endTime,
+            modelId: modelId,
+            position: p ? p : lines,
+            positionOringon: positionOringon,
+            positionEnd: positionEnd,
+            eventType: eventType,
+            fireWorksBearAngle: fireWorksBearAngle || null,
+            fireWorksLevelAngle: fireWorksLevelAngle || null
+          }
+          let planEvent = new PlanEvent(obj);
+          planEvent.addEvent({ eventType: eventType });
+          that.add(planEvent);
+        })
+      }
+
+      if (pathCollection) {
+        pathCollection.forEach(item => {
+          let position = item.position;
+          let modelId = item.modelId;
+          let lines = [];
+          if (position) {
+            for (let i = 0; i < position.length; i += 3) {
+              let p0 = position[i + 0];
+              let p1 = position[i + 1];
+              let p2 = position[i + 2];
+              let p = new Cesium.Cartesian3(p0, p1, p2);
+              lines.push(p);
+            }
+          }
+          let obj = {
+            viewer: that._viewer,
+            position: lines,
+            eventType: item.eventType,
+            modelId: modelId
+          }
+
+          let planPath = new PlanPath(obj);
+          planPath.addPath();
+          that.add(planPath);
+        })
+      }
+    }
+
+  }
+}
+
 planControl.prototype.toJSON = function () {
   let modelCollectionCopy = [];
   let eventCollectionCopy = [];
@@ -421,7 +620,9 @@ planControl.prototype.toJSON = function () {
       name: item._name,
       modelType: item._modelType,
       speed: item._speed,
-      singleMove: item._singleMove
+      singleMove: item._singleMove,
+      heading: item._heading,
+      pitch: item._pitch
     }
     modelCollectionCopy.push(obj);
   })
