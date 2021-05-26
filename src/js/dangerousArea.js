@@ -1,15 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2021-04-12 16:06:34
- * @LastEditTime: 2021-04-14 14:23:38
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \derive\src\js\dangerousAirArea.js
- */
-/*
- * @Author: your name
- * @Date: 2021-04-12 16:06:34
- * @LastEditTime: 2021-04-12 18:38:11
+ * @LastEditTime: 2021-05-26 16:55:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \derive\src\js\dangerousAirArea.js
@@ -36,12 +28,12 @@ let calcCarParam = [
   { bear: 287, distance: 6 }
 ];
 let bestPositions = [
-  { bear: 135,baseHeading:225, distance: 15 },
-  { bear: 180,baseHeading:90, distance: 20 },
-  { bear: 195,baseHeading:100, distance: 20 },
-  { bear: 45,baseHeading:135, distance: 15 },
-  { bear: 0,baseHeading:90, distance: 20 },
-  { bear: 345,baseHeading:80, distance: 20 },
+  { bear: 135, baseHeading: 225, distance: 15 },
+  { bear: 180, baseHeading: 90, distance: 20 },
+  { bear: 195, baseHeading: 100, distance: 20 },
+  { bear: 45, baseHeading: 135, distance: 15 },
+  { bear: 0, baseHeading: 90, distance: 20 },
+  { bear: 345, baseHeading: 80, distance: 20 },
   // { bear: 189, distance: 6 },
   // { bear: 189, distance: 6 },
   // { bear: 180, distance: 6 },
@@ -57,8 +49,15 @@ function DangerousAirArea(options) {
   if (!Cesium.defined(options)) return;
   if (!Cesium.defined(options.viewer)) return;
   this._viewer = options.viewer;
+  this._materialImage = options.materialImage;
   this._positionOrigin = Cesium.defaultValue(options.positionOrigin, null);
-  this._material = Cesium.defaultValue(options.material, Cesium.Color.CHOCOLATE.withAlpha(0.5));
+  this._material = new Cesium.ImageMaterialProperty({
+    image: this._materialImage,
+    repeat: new Cesium.Cartesian2(1.0, 1.0),
+    color: Cesium.Color.Cyan,
+    transparent: true
+  });
+  // this._material = Cesium.defaultValue(options.material, Cesium.Color.CHOCOLATE.withAlpha(0.5));
   this._outlineColor = Cesium.defaultValue(options.outlineColor, Cesium.Color.AQUA);
   this._baseHeading = Cesium.defaultValue(options.baseHeading, 0);
   this._entityType = Cesium.defaultValue(options.entityType, EntityMode.air);
@@ -121,11 +120,18 @@ DangerousAirArea.prototype.addArea = function () {
         hierarchy: Cesium.Cartesian3.fromDegreesArrayHeights(this._positions),
         perPositionHeight: true,
         material: this._material,
-        outline: true,
+        outline: false,
         outlineColor: this._outlineColor,
+        classificationType: Cesium.ClassificationType.BOTH
+      },
+      polyline: {
+        positions: Cesium.Cartesian3.fromDegreesArrayHeights(this._positions),
+        width: 1,
+        material: this._outlineColor,
         classificationType: Cesium.ClassificationType.BOTH
       }
     });
+
     this._areaEntity = areaEntity;
   }
 }

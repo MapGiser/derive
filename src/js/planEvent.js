@@ -527,9 +527,7 @@ PlanEvent.prototype.play = function () {
     }
   }
 
-
-
-  if (this._event) {
+  if (this._event) { 
     if (this._eventType === 2) {
       this._event.twzdEvent = showWaterParticle;
     } else if (this._eventType === 0) {
@@ -537,7 +535,6 @@ PlanEvent.prototype.play = function () {
     } else if (this._eventType === 1) {
       this._event.twzdEvent = showFireWorksParticle;
     }
-
   }
 }
 
